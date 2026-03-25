@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: shp-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  doctor-service:
+    build:
+      context: ../../services/doctor-service
+    container_name: shp-doctor-service
+    restart: unless-stopped
+    ports:
+      - "5003:5002"
+    environment:
+      PORT: "5002"
+      NODE_ENV: "production"
+      AUTH_MODE: "dev"
+      MONGODB_URI: "mongodb://mongo:27017/doctor_service"
+      CORS_ORIGIN: "http://localhost:3000"
+    depends_on:
+      - mongo
+
+volumes:
+  mongo_data:
