@@ -1,0 +1,42 @@
+import Prescription from "../models/Prescription.js";
+
+//Create a prescription for an appointment.
+export async function createPrescription(doctorUserId, payload) {
+  const { appointmentId, patientUserId, items, notes } = payload;
+
+  // Validate required fields
+  if (!appointmentId) throw new Error("appointmentId is required");
+  if (!patientUserId) throw new Error("patientUserId is required");
+  if (!Array.isArray(items) || items.length === 0) throw new Error("items must be a non-empty array");
+
+  // Later: validate appointment ownership/status via appointment-service
+  return Prescription.create({
+    appointmentId,
+    doctorUserId,
+    patientUserId,
+    items,
+    notes: notes || ""
+  });
+}
+
+//List prescriptions for a doctor (optionally filtered by appointment/patient)
+export async function listPrescriptionsForDoctor(doctorUserId, { appointmentId, patientUserId } = {}) {
+  const filter = { doctorUserId };
+  if (appointmentId) filter.appointmentId = appointmentId;
+  if (patientUserId) filter.patientUserId = patientUserId;
+
+  return Prescription.find(filter).sort({ createdAt: -1 });
+}
+
+//List prescriptions for a patient.
+export async function listPrescriptionsForPatient(patientUserId, { appointmentId } = {}) {
+  const filter = { patientUserId };
+  if (appointmentId) filter.appointmentId = appointmentId;
+
+  return Prescription.find(filter).sort({ createdAt: -1 });
+}
+
+//Fetch one prescription by its MongoDB _id.
+export async function getPrescriptionById(id) {
+  return Prescription.findById(id);
+}
