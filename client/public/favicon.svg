@@ -1,0 +1,14 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="nexaNGrad" x1="8" y1="56" x2="56" y2="8" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#38BDF8" />
+      <stop offset="0.5" stop-color="#6366F1" />
+      <stop offset="1" stop-color="#22C55E" />
+    </linearGradient>
+  </defs>
+  <rect x="6" y="6" width="52" height="52" rx="16" fill="url(#nexaNGrad)" />
+  <path
+    d="M22 44V20C22 19.4477 22.4477 19 23 19H26C26.3682 19 26.7177 19.169 26.94 19.46L38 34.52V20C38 19.4477 38.4477 19 39 19H42C42.5523 19 43 19.4477 43 20V44C43 44.5523 42.5523 45 42 45H39C38.6318 45 38.2823 44.831 38.06 44.54L27 29.48V44C27 44.5523 26.5523 45 26 45H23C22.4477 45 22 44.5523 22 44Z"
+    fill="white"
+  />
+</svg>
