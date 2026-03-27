@@ -1,0 +1,29 @@
+Repository: <paste your repo URL>
+
+Services:
+- doctor-service (Node/Express) on container port 5002
+- telemedicine-service (Node/Express) on container port 5005
+- mongo (MongoDB) on port 27017
+
+How to run (Kubernetes - Docker Desktop):
+1) Build images:
+   docker build -t doctor-service:local services/doctor-service
+   docker build -t telemedicine-service:local services/telemedicine-service
+
+2) Deploy:
+   kubectl config use-context docker-desktop
+   kubectl apply -f deploy/kubernetes/mongo/
+   kubectl apply -f deploy/kubernetes/doctor-service/
+   kubectl apply -f deploy/kubernetes/telemedicine-service/
+
+3) Access (port-forward):
+   kubectl port-forward svc/doctor-service 5003:5002
+   kubectl port-forward svc/telemedicine-service 5005:5005
+
+Test endpoints:
+- GET http://localhost:5003/health
+- GET http://localhost:5005/health
+- Telemedicine APIs: /api/sessions ...
+
+Notes:
+- CORS origin: http://localhost:<frontend-port>
