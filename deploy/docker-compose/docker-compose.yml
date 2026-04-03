@@ -21,7 +21,8 @@ services:
       PORT: "5002"
       NODE_ENV: "production"
       AUTH_MODE: "dev"
-      MONGODB_URI: "mongodb://mongo:27017/doctor_service"
+      # MONGODB_URI: "mongodb://mongo:27017/doctor_service"
+      MONGODB_URI: ${MONGODB_URI}
       CORS_ORIGIN: "http://localhost:3000"
     depends_on:
       - mongo

@@ -78,6 +78,9 @@ web_modules/
 .next
 out
 
+# Docker Compose secrets / local config
+deploy/docker-compose/.env
+
 # Nuxt.js build / generate output
 .nuxt
 dist
