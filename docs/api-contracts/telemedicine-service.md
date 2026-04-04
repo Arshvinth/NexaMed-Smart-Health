@@ -1,7 +1,10 @@
 # Telemedicine Service — API Contract
 
 ## Base URL
-- Docker Compose / Local: `http://localhost:5005`
+- Docker Compose / Local: `http://localhost:5000`
+
+Gateway route mapping:
+- `/api/sessions/*` -> telemedicine-service
 
 ## Authentication (DEV mode)
 This service uses dev-auth headers (until JWT is integrated).

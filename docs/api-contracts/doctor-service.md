@@ -1,6 +1,10 @@
 # Doctor Service API Contract
 
-Base URL (dev): `http://localhost:5002`
+Base URL (dev): `http://localhost:5000`
+
+Gateway route mapping:
+- `/api/doctors/*` -> doctor-service
+- `/api/prescriptions/*` -> doctor-service
 
 ## Auth (temporary dev mode)
 Send headers in Postman:
