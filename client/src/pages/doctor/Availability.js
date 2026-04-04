@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 
-const DOCTOR_API_BASE_URL =
-  process.env.REACT_APP_DOCTOR_SERVICE_URL || "http://localhost:5003";
+const API_GATEWAY_BASE_URL =
+  process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
 
 const DEV_AUTH = {
   userId: process.env.REACT_APP_DOCTOR_USER_ID || "doc1",
@@ -40,7 +40,7 @@ export default function Availability() {
   const [success, setSuccess] = useState("");
 
   async function fetchSlots() {
-    const response = await fetch(`${DOCTOR_API_BASE_URL}/api/doctors/me/availability`, {
+    const response = await fetch(`${API_GATEWAY_BASE_URL}/api/doctors/me/availability`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -120,7 +120,7 @@ export default function Availability() {
     setError("");
 
     try {
-      const response = await fetch(`${DOCTOR_API_BASE_URL}/api/doctors/me/availability`, {
+      const response = await fetch(`${API_GATEWAY_BASE_URL}/api/doctors/me/availability`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -162,7 +162,7 @@ export default function Availability() {
 
     try {
       const response = await fetch(
-        `${DOCTOR_API_BASE_URL}/api/doctors/me/availability/${slotId}`,
+        `${API_GATEWAY_BASE_URL}/api/doctors/me/availability/${slotId}`,
         {
           method: "DELETE",
           headers: {

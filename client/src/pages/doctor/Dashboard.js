@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
-const DOCTOR_API_BASE_URL =
-  process.env.REACT_APP_DOCTOR_SERVICE_URL || "http://localhost:5003";
+const API_GATEWAY_BASE_URL =
+  process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
 
 const DEV_AUTH = {
   userId: process.env.REACT_APP_DOCTOR_USER_ID || "doc1",
@@ -23,7 +23,7 @@ function getAuthHeaders() {
 }
 
 async function fetchJson(path) {
-  const response = await fetch(`${DOCTOR_API_BASE_URL}${path}`, {
+  const response = await fetch(`${API_GATEWAY_BASE_URL}${path}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
