@@ -25,3 +25,16 @@ export const uploadMedicalReports = async (files, patientId) => {
 export const getMedicalReportsByPatient = async (patientId) => {
     return await MedicalReport.find({ patientId }).sort({ uploadedAt: -1 });
 };
+
+export const updateMedicalReport = async (reportId, file) => {
+
+    const result = await uploadToCloudinary(file, 'medical-reports');
+
+    const updatedReport = await MedicalReport.findByIdAndUpdate(
+        reportId,
+        { file: { url: result.secure_url } },
+        { new: true }
+    );
+
+    return updatedReport;
+}
