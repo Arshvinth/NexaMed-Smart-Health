@@ -4,8 +4,12 @@ import cors from "cors";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
+import multer from "multer";
 import connectDB from "./src/config/db";
 import logger from "./src/utils/Logger";
+import medicalReportsRouter from "./src/route/medicalReports.js";
+import prescriptionsRouter from "./src/route/prescriptions.js";
+import profileRouter from "./src/route/profileRoute.js";
 
 dotenv.config();
 
@@ -31,6 +35,24 @@ const limitter = rateLimit({
 });
 
 app.use("/api", limitter);
+
+// Routes
+app.use('/api/medical-reports', medicalReportsRouter);
+app.use('/api/prescriptions', prescriptionsRouter);
+app.use('/api/patients', profileRouter);
+
+// Error handling for multer
+app.use((error, req, res, next) => {
+    if (error instanceof multer.MulterError) {
+        if (error.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ message: 'File too large. Maximum size is 10MB.' });
+        }
+    }
+    if (error.message.includes('Only these files')) {
+        return res.status(400).json({ message: error.message });
+    }
+    next(error);
+});
 
 //start server
 const PORT = process.env.PORT || 8080;
