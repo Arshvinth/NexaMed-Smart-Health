@@ -26,3 +26,4 @@ export const uploadPrescriptions = async (files, patientId, doctorId) => {
 export const getPrescriptionsByPatient = async (patientId) => {
     return await Prescription.find({ patientId }).sort({ uploadedAt: -1 });
 };
+
