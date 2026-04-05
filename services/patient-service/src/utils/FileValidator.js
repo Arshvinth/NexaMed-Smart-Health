@@ -1,4 +1,4 @@
-const fileFilter = (req, file, cb) => {
+export const fileFilter = (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|gif|webp|pdf/;
 
     const extention = allowedTypes.test(file.originalname.toLowerCase().split('.').pop());

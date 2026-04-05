@@ -10,4 +10,5 @@ router.post('/upload', uploadPrescriptions.array('files', 10), uploadPrescriptio
 // Get prescriptions for a patient
 router.get('/:patientId', getPrescriptions);
 
+
 export default router;

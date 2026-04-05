@@ -1,10 +1,10 @@
 import express from 'express';
-import { deletePatientProfile, getAllPatients, getPatientprofile, updatePatientProfile } from '../controllers/profileController';
+import { deletePatientProfile, getAllPatients, getPatientprofile, updatePatientProfile } from '../controllers/profileController.js';
 
 const router = express.Router();
 
 // Get patient profile
-router.get('/profile', getPatientprofile);
+router.get('/profile/:patientid', getPatientprofile);
 // Update patient profile
 router.put('/profile/:patientid', updatePatientProfile);
 
@@ -12,6 +12,6 @@ router.put('/profile/:patientid', updatePatientProfile);
 router.delete('/profile/:patientid', deletePatientProfile);
 
 // Get all patients
-router.get('/all', getAllPatients);
+router.get('/', getAllPatients);
 
 export default router;

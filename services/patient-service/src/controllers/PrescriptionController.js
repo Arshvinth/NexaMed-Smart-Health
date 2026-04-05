@@ -9,6 +9,7 @@ export const uploadPrescription = async (req, res) => {
 
         const uploadedPrescriptions = await uploadPrescriptions(req.files, req.body.patientId, req.body.doctorId);
 
+        logger.info(`${uploadedPrescriptions.length} prescription(s) uploaded successfully for patient ID ${req.body.patientId}`);
         res.status(201).json({
             message: `${uploadedPrescriptions.length} prescription(s) uploaded successfully`,
             data: uploadedPrescriptions
@@ -24,9 +25,11 @@ export const getPrescriptions = async (req, res) => {
         const { patientId } = req.params;
         const prescriptions = await getPrescriptionsByPatient(patientId);
         res.status(200).json({ data: prescriptions });
+        logger.info(`Prescriptions for patient ID ${patientId} fetched successfully`);
     } catch (error) {
         console.error('Error fetching prescriptions:', error);
         res.status(500).json({ message: 'Internal server error' });
+        logger.error(`Error fetching prescriptions for patient ID ${req.params.patientId}: ${error.message}`);
     }
 };
 

@@ -1,10 +1,10 @@
-import { log } from "winston";
-import Patient from "../model/Patient";
-import logger from "../utils/Logger"
+
+import Patient from "../model/Patient.js";
+import logger from "../utils/Logger.js"
 
 
 // Service to get patient profile by ID
-export const getPatientProfile = async (patientId) => {
+export const getPatientProfiles = async (patientId) => {
 
     if (!patientId) {
         logger.error('Patient ID is required to fetch profile');
@@ -23,7 +23,7 @@ export const getPatientProfile = async (patientId) => {
 }
 
 // Service to update patient profile
-export const updatePatientProfile = async (patientId, updateData) => {
+export const updatePatientProfiles = async (patientId, updateData) => {
 
     if (!patientId) {
         logger.error('Patient ID is required to update profile');
@@ -42,16 +42,16 @@ export const updatePatientProfile = async (patientId, updateData) => {
 }
 
 //delete patient profile
-export const deletePatientProfile = async (patientid) => {
+export const deletePatientProfiles = async (patientid) => {
 
     if (!patientid) {
         logger.error('Patient ID is required to delete profile');
         throw new Error("Patient Id is Required");
     }
 
-    const deletedProfile = await Patient.findByIdAndDelete(patientId);
+    const deletedProfile = await Patient.findByIdAndDelete(patientid);
     if (!deletedProfile) {
-        logger.error(`No patient found with ID: ${patientId} to delete`);
+        logger.error(`No patient found with ID: ${patientid} to delete`);
         throw new Error("Patient Not Found");
     }
 
@@ -59,7 +59,7 @@ export const deletePatientProfile = async (patientid) => {
 }
 
 //get all patients
-export const getAllpatients = async () => {
+export const getAllProfiles = async () => {
     const patients = await Patient.find();
     return patients;
 }

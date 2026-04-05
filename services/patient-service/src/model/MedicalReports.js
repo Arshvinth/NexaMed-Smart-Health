@@ -14,3 +14,5 @@ const MedicalReportSchema = new mongoose.Schema({
         default: Date.now
     }
 }, { timestamps: true });
+
+export default mongoose.model('MedicalReport', MedicalReportSchema); 

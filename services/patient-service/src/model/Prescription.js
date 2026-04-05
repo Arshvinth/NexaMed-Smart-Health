@@ -1,3 +1,4 @@
+
 import mongoose from "mongoose";
 
 const PrescriptionSchema = new mongoose.Schema({
@@ -6,8 +7,8 @@ const PrescriptionSchema = new mongoose.Schema({
         ref: "Patient"
     },
     doctorId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Doctor"
+        type: String,
+        required: true
     },
     file: {
         url: String
