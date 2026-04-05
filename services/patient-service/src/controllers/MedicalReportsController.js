@@ -1,0 +1,30 @@
+import { uploadMedicalReports, getMedicalReportsByPatient } from '../services/MedicalReportsService.js';
+
+export const uploadMedicalReport = async (req, res) => {
+    try {
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ message: 'No files uploaded' });
+        }
+
+        const uploadedReports = await uploadMedicalReports(req.files, req.body.patientId);
+
+        res.status(201).json({
+            message: `${uploadedReports.length} medical report(s) uploaded successfully`,
+            data: uploadedReports
+        });
+    } catch (error) {
+        console.error('Error uploading medical report:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const getMedicalReports = async (req, res) => {
+    try {
+        const { patientId } = req.params;
+        const reports = await getMedicalReportsByPatient(patientId);
+        res.status(200).json({ data: reports });
+    } catch (error) {
+        console.error('Error fetching medical reports:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
