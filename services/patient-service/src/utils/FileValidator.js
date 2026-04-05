@@ -1,5 +1,5 @@
 const fileFilter = (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|pdf/;
+    const allowedTypes = /jpeg|jpg|png|gif|webp|pdf/;
 
     const extention = allowedTypes.test(file.originalname.toLowerCase().split('.').pop());
     const mimetype = allowedTypes.test(file.mimetype);
