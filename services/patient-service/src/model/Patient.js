@@ -1,20 +1,9 @@
 import mongoose from "mongoose";
 
 const PatientSchema = new mongoose.Schema({
-    fullName: {
-        required: true,
-        type: String
-    },
-
-    email: {
+    userid: {
         type: String,
-        required: true,
-        unique: true
-    },
-    mobileNumber: {
-        type: String,
-        required: true,
-        unique: true
+        required: true
     },
     birthDay: {
         type: Date,
