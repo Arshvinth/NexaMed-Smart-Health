@@ -1,4 +1,5 @@
 import { uploadPrescriptions, getPrescriptionsByPatient } from '../services/PrescriptionService.js';
+import logger from '../utils/Logger.js';
 
 export const uploadPrescription = async (req, res) => {
     try {
@@ -28,3 +29,5 @@ export const getPrescriptions = async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
+
