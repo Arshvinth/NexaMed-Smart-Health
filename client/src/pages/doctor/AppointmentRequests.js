@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const API_GATEWAY_BASE_URL =
   process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
@@ -123,6 +124,7 @@ async function completeAppointment(appointmentId) {
 }
 
 export default function AppointmentRequests() {
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [activeFilter, setActiveFilter] = useState("pending");
   const [loading, setLoading] = useState(true);
@@ -193,6 +195,23 @@ export default function AppointmentRequests() {
     }
   }
 
+  async function handleStartConsultation(appt) {
+    if (appt.status !== "confirmed") {
+      setError("Only confirmed appointments can start a consultation.");
+      return;
+    }
+
+    setBusyId(appt._id);
+    setError("");
+    setSuccess("");
+
+    try {
+      navigate(`/doctor/consult/${appt._id}`);
+    } finally {
+      setBusyId("");
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -249,6 +268,9 @@ export default function AppointmentRequests() {
               const cancellable = CANCELLABLE_STATUSES.includes(appt.status);
               const completable = COMPLETABLE_STATUSES.includes(appt.status);
               const isBusy = busyId === appt._id;
+              const canStartConsultation = appt.status === "confirmed";
+              const canIssuePrescription =
+                appt.status === "confirmed" || appt.status === "completed";
 
               return (
                 <div key={appt._id} className="rounded-xl border border-slate-200 p-4">
@@ -290,14 +312,39 @@ export default function AppointmentRequests() {
                       ) : null}
                     </div>
 
-                    <span
-                      className={[
-                        "inline-flex rounded-full px-2.5 py-1 text-xs font-bold",
-                        statusBadgeClass(appt.status),
-                      ].join(" ")}
-                    >
-                      {getStatusLabel(appt.status)}
-                    </span>
+                    <div className="flex flex-col items-end gap-2">
+                      <span
+                        className={[
+                          "inline-flex rounded-full px-2.5 py-1 text-xs font-bold",
+                          statusBadgeClass(appt.status),
+                        ].join(" ")}
+                      >
+                        {getStatusLabel(appt.status)}
+                      </span>
+
+                      {canStartConsultation ? (
+                        <button
+                          type="button"
+                          disabled={isBusy}
+                          onClick={() => handleStartConsultation(appt)}
+                          className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-60"
+                        >
+                          {isBusy ? "Please wait..." : "Start consultation"}
+                        </button>
+                      ) : null}
+                      {canIssuePrescription ? (
+                        <button
+                          type="button"
+                          disabled={isBusy}
+                          onClick={() =>
+                            navigate(`/doctor/prescriptions/${appt._id}`)
+                          }
+                          className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
+                        >
+                          Issue prescription
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
 
                   {cancellable || completable ? (
