@@ -101,6 +101,37 @@ export async function cancelAppointment(
   return appointment;
 }
 
+export async function completeAppointment(appointmentId, userId, role) {
+  const appointment = await Appointment.findById(appointmentId);
+  if (!appointment) {
+    const err = new Error("Appointment not found");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  if (role !== "DOCTOR") {
+    const err = new Error("Only doctors can mark appointments as completed");
+    err.statusCode = 403;
+    throw err;
+  }
+
+  if (appointment.doctorUserId !== userId) {
+    const err = new Error("Not authorized");
+    err.statusCode = 403;
+    throw err;
+  }
+
+  if (appointment.status !== "confirmed") {
+    const err = new Error("Only confirmed appointments can be completed");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  appointment.status = "completed";
+  await appointment.save();
+  return appointment;
+}
+
 export async function rescheduleAppointment(
   oldAppointmentId,
   userId,

@@ -7,6 +7,7 @@ import {
   postAppointment,
   putConfirmAppointment,
   patchCancelAppointment,
+  patchCompleteAppointment,
   postRescheduleAppointment,
   getMyAppointments,
   getAppointment,
@@ -26,6 +27,11 @@ router.patch(
   "/:id/cancel",
   requireRole("PATIENT", "DOCTOR"),
   asyncHandler(patchCancelAppointment),
+);
+router.patch(
+  "/:id/complete",
+  requireRole("DOCTOR"),
+  asyncHandler(patchCompleteAppointment),
 );
 router.post(
   "/:id/reschedule",

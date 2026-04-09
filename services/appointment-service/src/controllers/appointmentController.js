@@ -4,6 +4,7 @@ import {
   createAppointment,
   confirmAppointment,
   cancelAppointment,
+  completeAppointment,
   rescheduleAppointment,
   getUserAppointments,
   getAppointmentById,
@@ -86,6 +87,15 @@ export async function patchCancelAppointment(req, res) {
   const role = req.user.role;
   const appointment = await cancelAppointment(id, userId, role, reason);
   emitAppointmentUpdate(appointment, "appointment_cancelled");
+  res.json(appointment);
+}
+
+export async function patchCompleteAppointment(req, res) {
+  const { id } = req.params;
+  const userId = req.user.userId;
+  const role = req.user.role;
+  const appointment = await completeAppointment(id, userId, role);
+  emitAppointmentUpdate(appointment, "appointment_completed");
   res.json(appointment);
 }
 

@@ -13,9 +13,11 @@ services:
       NODE_ENV: "production"
       CORS_ORIGIN: "http://localhost:3000"
       DOCTOR_SERVICE_URL: "http://doctor-service:5002"
+      APPOINTMENT_SERVICE_URL: "http://appointment-service:5003"
       TELEMEDICINE_SERVICE_URL: "http://telemedicine-service:5005"
     depends_on:
       - doctor-service
+      - appointment-service
       - telemedicine-service
 
   mongo:
@@ -40,6 +42,24 @@ services:
       CORS_ORIGIN: "http://localhost:3000"
     depends_on:
       - mongo
+
+  appointment-service:
+    build:
+      context: ../../services/appointment-service
+    container_name: shp-appointment-service
+    restart: unless-stopped
+    environment:
+      PORT: "5003"
+      NODE_ENV: "production"
+      AUTH_MODE: "dev"
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/appointment_service}
+      CORS_ORIGIN: "http://localhost:3000"
+      DOCTOR_SERVICE_URL: "http://doctor-service:5002"
+      TELEMEDICINE_SERVICE_URL: "http://telemedicine-service:5005"
+    depends_on:
+      - mongo
+      - doctor-service
+      - telemedicine-service
     
   telemedicine-service:
     build:
