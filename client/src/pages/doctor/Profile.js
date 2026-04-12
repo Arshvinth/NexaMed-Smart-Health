@@ -34,8 +34,11 @@ function getAuthHeaders() {
 function mapProfileToForm(profile) {
   if (!profile) return INITIAL_FORM;
 
+  const rawName = profile.fullName || "";
+  const withoutPrefix = rawName.replace(/^Dr\.?\s*/i, "").trim();
+
   return {
-    fullName: profile.fullName || "",
+    fullName: withoutPrefix,
     phone: profile.phone || "",
     specialization: profile.specialization || "",
     registrationNo: profile.registrationNo || "",
@@ -47,8 +50,10 @@ function mapProfileToForm(profile) {
 }
 
 function buildPayload(form) {
+  const trimmedName = form.fullName.trim();
+  const fullNameWithPrefix = trimmedName ? `Dr. ${trimmedName}` : "";
   return {
-    fullName: form.fullName.trim(),
+    fullName: fullNameWithPrefix,
     phone: form.phone.trim(),
     specialization: form.specialization.trim(),
     registrationNo: form.registrationNo.trim(),
@@ -75,6 +80,8 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [editMode, setEditMode] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const loadProfile = useCallback(async ({ background = false } = {}) => {
     if (background) {
@@ -101,6 +108,7 @@ export default function Profile() {
       const data = await response.json();
       setForm(mapProfileToForm(data));
       setVerificationStatus(data?.verificationStatus || "Unknown");
+      setEditMode(false);
     } catch (e) {
       setError(e?.message || "Unable to load profile.");
     } finally {
@@ -117,10 +125,15 @@ export default function Profile() {
   }, [loadProfile]);
 
   const isValid = useMemo(() => {
+    const phone = form.phone.trim();
+    const phonePattern = /^\+94\d{9}$/;
+    const phoneOk = phonePattern.test(phone);
+
     return (
       form.fullName.trim() &&
       form.specialization.trim() &&
       form.registrationNo.trim() &&
+      phoneOk &&
       Number(form.experienceYears) >= 0 &&
       Number(form.fee) >= 0
     );
@@ -129,6 +142,17 @@ export default function Profile() {
   function onChange(event) {
     const { name, value } = event.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+
+     if (name === "phone") {
+       const phone = value.trim();
+       const phonePattern = /^\+94\d{9}$/;
+       setFieldErrors((prev) => ({
+         ...prev,
+         phone: phone && !phonePattern.test(phone)
+           ? "Phone must be in format +94 followed by 9 digits."
+           : "",
+       }));
+     }
   }
 
   async function onSubmit(event) {
@@ -136,7 +160,9 @@ export default function Profile() {
     setSuccess("");
 
     if (!isValid) {
-      setError("Please complete required fields and use non-negative numbers.");
+      setError(
+        "Please complete all required fields, ensure phone is in format +94XXXXXXXXX, and use non-negative numbers.",
+      );
       return;
     }
 
@@ -162,6 +188,7 @@ export default function Profile() {
       setForm(mapProfileToForm(updated));
       setVerificationStatus(updated?.verificationStatus || verificationStatus);
       setSuccess("Profile updated successfully.");
+      setEditMode(false);
     } catch (e) {
       setError(e?.message || "Unable to update profile.");
     } finally {
@@ -188,6 +215,18 @@ export default function Profile() {
           >
             {reloading ? "Refreshing..." : "Refresh"}
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              setEditMode((prev) => !prev);
+              setSuccess("");
+              setError("");
+            }}
+            disabled={loading || saving}
+            className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-60"
+          >
+            {editMode ? "Cancel Edit" : "Edit"}
+          </button>
         </div>
       </div>
 
@@ -204,23 +243,35 @@ export default function Profile() {
       ) : null}
 
       <form onSubmit={onSubmit} className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Field
-          label="Full Name"
-          name="fullName"
-          value={form.fullName}
-          onChange={onChange}
-          required
-          disabled={loading || saving}
-          placeholder="Dr. Jane Smith"
-        />
+        <label className="block">
+          <span className="text-sm font-semibold text-slate-700">
+            Full Name<span className="text-rose-500"> *</span>
+          </span>
+          <div className="mt-1 flex items-center gap-1">
+            <span className="rounded-l-xl border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-700">
+              Dr.
+            </span>
+            <input
+              name="fullName"
+              value={form.fullName}
+              onChange={onChange}
+              required
+              disabled={loading || saving || !editMode}
+              placeholder="Jane Smith"
+              className="w-full rounded-r-xl border border-l-0 border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sky-300"
+            />
+          </div>
+        </label>
 
         <Field
           label="Phone"
           name="phone"
           value={form.phone}
           onChange={onChange}
-          disabled={loading || saving}
-          placeholder="+94 7X XXX XXXX"
+          required
+          disabled={loading || saving || !editMode}
+          placeholder="+947XXXXXXXX"
+          error={fieldErrors.phone}
         />
 
         <Field
@@ -229,7 +280,7 @@ export default function Profile() {
           value={form.specialization}
           onChange={onChange}
           required
-          disabled={loading || saving}
+          disabled={loading || saving || !editMode}
           placeholder="Cardiology"
         />
 
@@ -239,7 +290,7 @@ export default function Profile() {
           value={form.registrationNo}
           onChange={onChange}
           required
-          disabled={loading || saving}
+          disabled={loading || saving || !editMode}
           placeholder="SLMC-12345"
         />
 
@@ -250,7 +301,7 @@ export default function Profile() {
           name="experienceYears"
           value={form.experienceYears}
           onChange={onChange}
-          disabled={loading || saving}
+          disabled={loading || saving || !editMode}
         />
 
         <Field
@@ -260,7 +311,7 @@ export default function Profile() {
           name="fee"
           value={form.fee}
           onChange={onChange}
-          disabled={loading || saving}
+          disabled={loading || saving || !editMode}
         />
 
         <div className="md:col-span-2">
@@ -269,7 +320,7 @@ export default function Profile() {
             name="bio"
             value={form.bio}
             onChange={onChange}
-            disabled={loading || saving}
+            disabled={loading || saving || !editMode}
             rows={5}
             className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sky-300"
             placeholder="Briefly describe your background and care approach"
@@ -277,21 +328,25 @@ export default function Profile() {
         </div>
 
         <div className="md:col-span-2 flex items-center gap-3 pt-2">
-          <button
-            type="submit"
-            disabled={loading || saving || !isValid}
-            className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-          >
-            {saving ? "Saving..." : "Save Profile"}
-          </button>
-          {loading ? <span className="text-sm text-slate-500">Loading current profile...</span> : null}
+          {editMode ? (
+            <button
+              type="submit"
+              disabled={loading || saving || !isValid}
+              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            >
+              {saving ? "Saving..." : "Save Profile"}
+            </button>
+          ) : null}
+          {loading ? (
+            <span className="text-sm text-slate-500">Loading current profile...</span>
+          ) : null}
         </div>
       </form>
     </div>
   );
 }
 
-function Field({ label, name, value, onChange, required, disabled, placeholder, ...rest }) {
+function Field({ label, name, value, onChange, required, disabled, placeholder, error, ...rest }) {
   return (
     <label className="block">
       <span className="text-sm font-semibold text-slate-700">
@@ -308,6 +363,9 @@ function Field({ label, name, value, onChange, required, disabled, placeholder, 
         placeholder={placeholder}
         className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sky-300"
       />
+      {error ? (
+        <p className="mt-1 text-xs text-rose-600">{error}</p>
+      ) : null}
     </label>
   );
 }

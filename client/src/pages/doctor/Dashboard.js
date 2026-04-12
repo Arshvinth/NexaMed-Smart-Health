@@ -134,7 +134,7 @@ export default function Dashboard() {
           <p className="text-sm text-slate-600 mt-1">
             {loading
               ? "Loading your latest profile and activity..."
-              : `Welcome${profile?.fullName ? `, Dr. ${profile.fullName}` : ""}`}
+              : `Welcome${profile?.fullName ? `, ${profile.fullName}` : ""}`}
           </p>
         </div>
         <button
