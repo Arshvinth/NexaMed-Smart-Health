@@ -99,20 +99,67 @@ export default function Availability() {
     event.preventDefault();
     setSuccess("");
 
+    // Required fields
     if (!startTime || !endTime) {
-      setError("Please select both start and end time.");
+      setError("Both start and end time are required.");
       return;
     }
 
     const start = new Date(startTime);
     const end = new Date(endTime);
+    const now = new Date();
+
+    // Valid date check
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
       setError("Please provide valid start and end times.");
       return;
     }
 
+    // Not in the past
+    if (start <= now || end <= now) {
+      setError("Start and end times must be in the future.");
+      return;
+    }
+
+    // Order
     if (end <= start) {
       setError("End time must be after start time.");
+      return;
+    }
+
+    // Duration (in minutes)
+    const duration = (end - start) / (1000 * 60);
+    if (duration < 15) {
+      setError("Slot duration must be at least 15 minutes.");
+      return;
+    }
+    if (duration > 120) {
+      setError("Slot duration cannot exceed 2 hours (120 minutes).");
+      return;
+    }
+
+    // No overlap and no duplicate
+    const overlap = slots.some((slot) => {
+      const slotStart = new Date(slot.startTime);
+      const slotEnd = new Date(slot.endTime);
+      // Overlap: (A < D && C < B)
+      return (
+        (start < slotEnd && end > slotStart)
+      );
+    });
+    if (overlap) {
+      setError("This slot overlaps with an existing slot.");
+      return;
+    }
+
+    const duplicate = slots.some((slot) => {
+      return (
+        new Date(slot.startTime).getTime() === start.getTime() &&
+        new Date(slot.endTime).getTime() === end.getTime()
+      );
+    });
+    if (duplicate) {
+      setError("This slot already exists.");
       return;
     }
 
@@ -257,6 +304,13 @@ export default function Availability() {
           >
             {submitting ? "Adding..." : "Add Slot"}
           </button>
+
+          {/* Show error below the input fields, only for add slot errors */}
+          {error && (
+            <div className="md:col-span-3 col-span-1 mt-2 text-xs text-rose-600">
+              {error}
+            </div>
+          )}
         </form>
       </div>
 
