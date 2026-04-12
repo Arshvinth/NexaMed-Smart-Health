@@ -16,6 +16,7 @@ export const doctorNav = [
   { label: "Availability", to: "/doctor/availability" },
   { label: "Appointment Requests", to: "/doctor/requests" },
   { label: "Consultation Room", to: "/doctor/consult" },
+  { label: "My Prescriptions", to: "/doctor/my-prescriptions" },
   { label: "Issue Prescription", to: "/doctor/prescriptions" },
   { label: "Patient Reports", to: "/doctor/patient-reports" },
 ];
