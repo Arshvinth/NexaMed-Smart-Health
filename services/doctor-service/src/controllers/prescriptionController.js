@@ -4,7 +4,9 @@ import {
   createPrescription,
   listPrescriptionsForDoctor,
   listPrescriptionsForPatient,
-  getPrescriptionById
+  getPrescriptionById,
+  updatePrescriptionForDoctor,
+  deletePrescriptionForDoctor
 } from "../services/prescriptionService.js";
 
 // POST /api/prescriptions
@@ -56,6 +58,44 @@ export async function getPrescription(req, res, next) {
     }
 
     res.json(row);
+  } catch (e) {
+    next(e);
+  }
+}
+
+// PUT /api/prescriptions/:id
+// Doctor updates a prescription they own.
+export async function putPrescription(req, res, next) {
+  try {
+    if (req.user.role !== "DOCTOR") {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const updated = await updatePrescriptionForDoctor(req.params.id, req.user.userId, req.body || {});
+    if (!updated) {
+      return res.status(404).json({ message: "Prescription not found" });
+    }
+
+    res.json(updated);
+  } catch (e) {
+    next(e);
+  }
+}
+
+// DELETE /api/prescriptions/:id
+// Doctor deletes a prescription they own.
+export async function deletePrescription(req, res, next) {
+  try {
+    if (req.user.role !== "DOCTOR") {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const deleted = await deletePrescriptionForDoctor(req.params.id, req.user.userId);
+    if (!deleted) {
+      return res.status(404).json({ message: "Prescription not found" });
+    }
+
+    res.status(204).send();
   } catch (e) {
     next(e);
   }

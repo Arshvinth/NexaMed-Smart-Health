@@ -40,3 +40,34 @@ export async function listPrescriptionsForPatient(patientUserId, { appointmentId
 export async function getPrescriptionById(id) {
   return Prescription.findById(id);
 }
+
+//Update a prescription owned by a specific doctor.
+export async function updatePrescriptionForDoctor(prescriptionId, doctorUserId, payload) {
+  const { items, notes } = payload;
+
+  const prescription = await Prescription.findOne({ _id: prescriptionId, doctorUserId });
+  if (!prescription) return null;
+
+  if (items !== undefined) {
+    if (!Array.isArray(items) || items.length === 0) {
+      throw new Error("items must be a non-empty array");
+    }
+    prescription.items = items;
+  }
+
+  if (notes !== undefined) {
+    if (typeof notes !== "string") {
+      throw new Error("notes must be a string");
+    }
+    prescription.notes = notes;
+  }
+
+  await prescription.save();
+  return prescription;
+}
+
+//Delete a prescription owned by a specific doctor.
+export async function deletePrescriptionForDoctor(prescriptionId, doctorUserId) {
+  const deleted = await Prescription.findOneAndDelete({ _id: prescriptionId, doctorUserId });
+  return deleted;
+}
