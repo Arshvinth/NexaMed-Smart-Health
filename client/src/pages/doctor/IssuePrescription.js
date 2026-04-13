@@ -11,6 +11,39 @@ const DEV_AUTH = {
     process.env.REACT_APP_DOCTOR_VERIFICATION_STATUS || "VERIFIED",
 };
 
+const FREQUENCY_OPTIONS = [
+  "Once daily",
+  "Twice daily",
+  "Three times daily",
+  "Every 6 hours",
+  "Every 8 hours",
+  "At bedtime",
+  "As needed",
+];
+
+const DOSAGE_SUGGESTIONS = [
+  "100mg",
+  "250mg",
+  "500mg",
+  "1g",
+  "2.5ml",
+  "5ml",
+  "10ml",
+];
+
+const MEDICINE_SUGGESTIONS = [
+  "Paracetamol",
+  "Ibuprofen",
+  "Amoxicillin",
+  "Ceftriaxone",
+  "Azithromycin",
+  "Metformin",
+  "Amlodipine",
+  "Atorvastatin",
+  "Omeprazole",
+  "Losartan",
+];
+
 function getAuthHeaders() {
   const storedUserId = localStorage.getItem("x-user-id");
   const storedRole = localStorage.getItem("x-role");
@@ -72,6 +105,7 @@ export default function IssuePrescription() {
 
   const [appointments, setAppointments] = useState([]);
   const [appointmentsLoading, setAppointmentsLoading] = useState(false);
+  const [itemErrors, setItemErrors] = useState([]);
 
   useEffect(() => {
     let active = true;
@@ -147,6 +181,15 @@ export default function IssuePrescription() {
       next[index] = { ...next[index], [field]: value };
       return next;
     });
+
+    setItemErrors((prev) => {
+      if (!prev || !prev.length) return prev;
+      const next = [...prev];
+      if (next[index]) {
+        next[index] = { ...next[index], [field]: "" };
+      }
+      return next;
+    });
   }
 
   function addItem() {
@@ -167,19 +210,55 @@ export default function IssuePrescription() {
       return;
     }
 
-    const cleanedItems = items
-      .map((it) => ({
-        ...it,
-        durationDays: Number(it.durationDays || 0),
-      }))
-      .filter(
-        (it) =>
-          it.medicineName &&
-          it.dosage &&
-          it.frequency &&
-          Number.isFinite(it.durationDays) &&
-          it.durationDays > 0,
-      );
+    const nextErrors = items.map(() => ({
+      medicineName: "",
+      dosage: "",
+      frequency: "",
+      durationDays: "",
+    }));
+
+    const cleanedItems = [];
+
+    items.forEach((rawItem, index) => {
+      const medicineName = (rawItem.medicineName || "").trim();
+      const dosage = (rawItem.dosage || "").trim();
+      const frequency = (rawItem.frequency || "").trim();
+      const durationDaysNum = Number(rawItem.durationDays || 0);
+
+      const hasAnyValue =
+        medicineName || dosage || frequency || rawItem.durationDays;
+
+      if (!hasAnyValue) {
+        // Completely empty row: ignore it.
+        return;
+      }
+
+      if (!medicineName) {
+        nextErrors[index].medicineName = "Medicine name is required.";
+      }
+      if (!dosage) {
+        nextErrors[index].dosage = "Dosage is required.";
+      }
+      if (!frequency) {
+        nextErrors[index].frequency = "Frequency is required.";
+      }
+      if (!Number.isFinite(durationDaysNum) || durationDaysNum <= 0) {
+        nextErrors[index].durationDays = "Enter days (must be \\u2265 1).";
+      }
+
+      const hasErrorForRow = Object.values(nextErrors[index]).some(Boolean);
+
+      if (!hasErrorForRow) {
+        cleanedItems.push({
+          medicineName,
+          dosage,
+          frequency,
+          durationDays: durationDaysNum,
+        });
+      }
+    });
+
+    setItemErrors(nextErrors);
 
     if (cleanedItems.length === 0) {
       setError("Please add at least one valid medicine.");
@@ -189,6 +268,7 @@ export default function IssuePrescription() {
     setSaving(true);
     setError("");
     setSuccess("");
+    setItemErrors([]);
 
     try {
       await createPrescription({
@@ -204,6 +284,13 @@ export default function IssuePrescription() {
       setSaving(false);
     }
   }
+
+  const selectedPatientName =
+    appointment?.patientName ||
+    appointment?.patientFullName ||
+    appointment?.patient_user_name ||
+    appointment?.patientUserId ||
+    "";
 
   return (
     <div className="space-y-4">
@@ -244,21 +331,59 @@ export default function IssuePrescription() {
                     ? "No confirmed appointments available"
                     : "Choose an appointment"}
               </option>
-              {appointments.map((appt) => (
-                <option key={appt._id} value={appt._id}>
-                  {`${appt._id} 
-                  | Patient: ${appt.patientUserId} 
-                  | ${new Date(appt.startTime).toLocaleString()}`}
-                </option>
-              ))}
+              {appointments.map((appt) => {
+                const displayPatientName =
+                  appt.patientName ||
+                  appt.patientFullName ||
+                  appt.patient_user_name ||
+                  appt.patientUserId;
+
+                const queueLabel =
+                  typeof appt.queueNumber === "number" || appt.queueNumber
+                    ? `#${appt.queueNumber}`
+                    : "No queue";
+
+                const dateTimeLabel = appt.startTime
+                  ? new Date(appt.startTime).toLocaleString()
+                  : "No time";
+
+                return (
+                  <option key={appt._id} value={appt._id}>
+                    {`${queueLabel} | ${dateTimeLabel} | Patient: ${displayPatientName}`}
+                  </option>
+                );
+              })}
             </select>
           </div>
         ) : null}
 
-        <p className="text-slate-600">
-          Appointment:{" "}
-          <span className="font-semibold">{appointmentId || "(select one)"}</span>
-        </p>
+        {appointmentId && appointment ? (
+          <div className="space-y-1 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Selected appointment
+            </p>
+            <p>
+              <span className="font-semibold text-slate-900">Patient:</span>{" "}
+              {selectedPatientName || appointment.patientUserId || "(unknown)"}
+            </p>
+            <p>
+              <span className="font-semibold text-slate-900">Date &amp; time:</span>{" "}
+              {appointment.startTime
+                ? new Date(appointment.startTime).toLocaleString()
+                : "(not set)"}
+            </p>
+            <p>
+              <span className="font-semibold text-slate-900">Queue #:</span>{" "}
+              {appointment.queueNumber ?? "N/A"}
+            </p>
+          </div>
+        ) : (
+          <p className="text-slate-600">
+            Appointment:{" "}
+            <span className="font-semibold">(select one)</span>
+          </p>
+        )}
+
         <p className="text-slate-600">
           Patient ID:{" "}
           <span className="font-semibold">
@@ -293,6 +418,12 @@ export default function IssuePrescription() {
               </button>
             </div>
 
+            {itemErrors.some((row) => row && Object.values(row).some(Boolean)) ? (
+              <p className="text-xs text-rose-600">
+                Please complete all fields for each medicine you want to add.
+              </p>
+            ) : null}
+
             <div className="space-y-3">
               {items.map((item, index) => (
                 <div
@@ -302,28 +433,50 @@ export default function IssuePrescription() {
                   <input
                     type="text"
                     placeholder="Medicine name"
+                    list="medicine-options"
                     className="min-w-[150px] flex-1 rounded-lg border border-slate-300 p-2 text-sm"
                     value={item.medicineName}
                     onChange={(e) =>
                       updateItem(index, "medicineName", e.target.value)
                     }
                   />
+                  {itemErrors[index]?.medicineName ? (
+                    <p className="basis-full text-xs text-rose-600">
+                      {itemErrors[index].medicineName}
+                    </p>
+                  ) : null}
                   <input
                     type="text"
                     placeholder="Dosage (e.g. 500mg)"
+                    list="dosage-options"
                     className="min-w-[120px] flex-1 rounded-lg border border-slate-300 p-2 text-sm"
                     value={item.dosage}
                     onChange={(e) => updateItem(index, "dosage", e.target.value)}
                   />
-                  <input
-                    type="text"
-                    placeholder="Frequency (e.g. 2x daily)"
-                    className="min-w-[140px] flex-1 rounded-lg border border-slate-300 p-2 text-sm"
+                  {itemErrors[index]?.dosage ? (
+                    <p className="basis-full text-xs text-rose-600">
+                      {itemErrors[index].dosage}
+                    </p>
+                  ) : null}
+                  <select
+                    className="min-w-[160px] flex-1 rounded-lg border border-slate-300 p-2 text-sm"
                     value={item.frequency}
                     onChange={(e) =>
                       updateItem(index, "frequency", e.target.value)
                     }
-                  />
+                  >
+                    <option value="">Select frequency</option>
+                    {FREQUENCY_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                  {itemErrors[index]?.frequency ? (
+                    <p className="basis-full text-xs text-rose-600">
+                      {itemErrors[index].frequency}
+                    </p>
+                  ) : null}
                   <input
                     type="number"
                     min="1"
@@ -334,6 +487,11 @@ export default function IssuePrescription() {
                       updateItem(index, "durationDays", e.target.value)
                     }
                   />
+                  {itemErrors[index]?.durationDays ? (
+                    <p className="basis-full text-xs text-rose-600">
+                      {itemErrors[index].durationDays}
+                    </p>
+                  ) : null}
                   {items.length > 1 ? (
                     <button
                       type="button"
@@ -346,6 +504,16 @@ export default function IssuePrescription() {
                 </div>
               ))}
             </div>
+            <datalist id="dosage-options">
+              {DOSAGE_SUGGESTIONS.map((opt) => (
+                <option key={opt} value={opt} />
+              ))}
+            </datalist>
+            <datalist id="medicine-options">
+              {MEDICINE_SUGGESTIONS.map((opt) => (
+                <option key={opt} value={opt} />
+              ))}
+            </datalist>
           </div>
 
           <button
