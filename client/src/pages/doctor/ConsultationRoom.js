@@ -157,32 +157,44 @@ export default function ConsultationRoom() {
                     ? "No confirmed appointments available"
                     : "Choose an appointment"}
               </option>
-              {appointments.map((appt) => (
-                <option key={appt._id} value={appt._id}>
-                  {`${appt._id} 
-                  | Patient: ${appt.patientUserId} 
-                  | ${new Date(appt.startTime).toLocaleString()}`}
-                </option>
-              ))}
+              {appointments.map((appt) => {
+                const displayPatientName =
+                  appt.patientName ||
+                  appt.patientFullName ||
+                  appt.patient_user_name ||
+                  appt.patientUserId;
+
+                const queueLabel =
+                  typeof appt.queueNumber === "number" || appt.queueNumber
+                    ? `#${appt.queueNumber}`
+                    : "No queue";
+
+                const dateTimeLabel = appt.startTime
+                  ? new Date(appt.startTime).toLocaleString()
+                  : "No time";
+
+                return (
+                  <option key={appt._id} value={appt._id}>
+                    {`${queueLabel} | ${dateTimeLabel} | Patient: ${displayPatientName}`}
+                  </option>
+                );
+              })}
             </select>
           </div>
         ) : null}
 
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-sm text-slate-600">
-              Appointment ID: <span className="font-semibold">{sessionId || "(not selected)"}</span>
-            </p>
-            <p className="mt-1 text-sm text-slate-600">
-              Meeting ID: <span className="font-semibold">{session?.roomName || "(loading)"}</span>
-            </p>
-          </div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-slate-600">
+            {sessionId
+              ? "You are viewing the selected consultation session."
+              : "Choose a confirmed appointment above to start a consultation."}
+          </p>
 
           {meetingLink ? (
             <button
               type="button"
               onClick={() => window.open(meetingLink, "_blank", "noopener,noreferrer")}
-              className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700"
+              className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700"
             >
               Open in new tab
             </button>
@@ -207,6 +219,27 @@ export default function ConsultationRoom() {
             </div>
           )}
         </div>
+
+        {sessionId ? (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Appointment ID
+              </p>
+              <p className="font-mono text-sm text-slate-900">
+                {sessionId}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Meeting ID
+              </p>
+              <p className="font-mono text-sm text-slate-900">
+                {loading ? "Loading..." : session?.roomName || "Not available"}
+              </p>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

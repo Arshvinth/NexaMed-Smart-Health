@@ -406,7 +406,6 @@ export default function AppointmentRequests() {
                   >
                     <div className="flex flex-col lg:flex-row lg:items-stretch">
 
-                      {/* LEFT SIDE: Identity & Status */}
                       <div className="flex flex-col border-b border-slate-100 p-5 lg:w-64 lg:border-b-0 lg:border-r bg-slate-50/50">
                         <span className="mb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Reference ID</span>
                         <code className="mb-4 text-xs font-bold text-slate-900">{appt._id.slice(-12)}</code>
@@ -423,7 +422,6 @@ export default function AppointmentRequests() {
                         </div>
                       </div>
 
-                      {/* MIDDLE: Patient & Schedule Info */}
                       <div className="flex-1 p-5">
                         <div className="grid grid-cols-1 gap-y-4 sm:grid-cols-2 md:grid-cols-3">
                           <InfoBlock label="Patient ID" value={appt.patientUserId} />
@@ -446,7 +444,6 @@ export default function AppointmentRequests() {
                         )}
                       </div>
 
-                      {/* RIGHT SIDE: Primary Actions */}
                       <div className="flex flex-col justify-center gap-2 border-t border-slate-100 p-5 lg:w-56 lg:border-t-0 lg:border-l">
                         {canStartConsultation && (
                           <button
@@ -472,7 +469,6 @@ export default function AppointmentRequests() {
                       </div>
                     </div>
 
-                    {/* BOTTOM STRIP: Management Actions */}
                     {(cancellable || completable) && (
                       <div className="flex items-center justify-end gap-3 bg-slate-50/80 border-t border-slate-100 px-5 py-3">
                         {cancellable && (
@@ -505,8 +501,7 @@ export default function AppointmentRequests() {
           )}
         </div>
       </div>
-
-
+      
     </div>
   );
 }
