@@ -257,7 +257,7 @@ export default function AppointmentRequests() {
         </div>
       ) : null}
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      {/* <div className="rounded-2xl border border-slate-200 bg-white p-4">
         {loading ? (
           <p className="text-sm text-slate-600">Loading appointments...</p>
         ) : visibleRows.length === 0 ? (
@@ -377,7 +377,150 @@ export default function AppointmentRequests() {
             })}
           </div>
         )}
+      </div> */}
+
+      <div className="rounded-3xl border border-slate-200 bg-slate-50/50 p-2 shadow-sm">
+        <div className="rounded-[1.3rem] border border-slate-100 bg-white p-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-12 space-x-3">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-sky-600 border-t-transparent" />
+              <p className="text-sm font-semibold text-slate-500">Loading appointments...</p>
+            </div>
+          ) : visibleRows.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-sm font-medium text-slate-500 italic">No appointments found for the selected criteria.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {visibleRows.map((appt) => {
+                const cancellable = CANCELLABLE_STATUSES.includes(appt.status);
+                const completable = COMPLETABLE_STATUSES.includes(appt.status);
+                const isBusy = busyId === appt._id;
+                const canStartConsultation = appt.status === "confirmed";
+                const canIssuePrescription = appt.status === "confirmed" || appt.status === "completed";
+
+                return (
+                  <div
+                    key={appt._id}
+                    className="relative overflow-hidden rounded-xl border border-slate-200 bg-white transition-colors hover:border-slate-300 hover:bg-slate-50/30"
+                  >
+                    <div className="flex flex-col lg:flex-row lg:items-stretch">
+
+                      {/* LEFT SIDE: Identity & Status */}
+                      <div className="flex flex-col border-b border-slate-100 p-5 lg:w-64 lg:border-b-0 lg:border-r bg-slate-50/50">
+                        <span className="mb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Reference ID</span>
+                        <code className="mb-4 text-xs font-bold text-slate-900">{appt._id.slice(-12)}</code>
+
+                        <div className="mt-auto">
+                          <span
+                            className={[
+                              "inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider shadow-sm",
+                              statusBadgeClass(appt.status),
+                            ].join(" ")}
+                          >
+                            {getStatusLabel(appt.status)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* MIDDLE: Patient & Schedule Info */}
+                      <div className="flex-1 p-5">
+                        <div className="grid grid-cols-1 gap-y-4 sm:grid-cols-2 md:grid-cols-3">
+                          <InfoBlock label="Patient ID" value={appt.patientUserId} />
+                          <InfoBlock label="Queue Number" value={appt.queueNumber ?? "N/A"} />
+                          <InfoBlock
+                            label="Payment Amount"
+                            value={typeof appt.paymentAmount === "number" ? `LKR ${appt.paymentAmount.toLocaleString()}` : "N/A"}
+                          />
+                          <InfoBlock label="Start Time" value={formatDateTime(appt.startTime)} />
+                          <InfoBlock label="End Time" value={formatDateTime(appt.endTime)} />
+                        </div>
+
+                        {appt.cancellationReason && (
+                          <div className="mt-4 rounded-lg border border-rose-100 bg-rose-50 p-3">
+                            <p className="text-xs leading-relaxed text-rose-800">
+                              <span className="font-bold uppercase mr-2">Cancellation Reason:</span>
+                              {appt.cancellationReason}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* RIGHT SIDE: Primary Actions */}
+                      <div className="flex flex-col justify-center gap-2 border-t border-slate-100 p-5 lg:w-56 lg:border-t-0 lg:border-l">
+                        {canStartConsultation && (
+                          <button
+                            type="button"
+                            disabled={isBusy}
+                            onClick={() => handleStartConsultation(appt)}
+                            className="w-full rounded-lg bg-sky-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-sky-700 disabled:opacity-50"
+                          >
+                            {isBusy ? "Processing..." : "Start Consultation"}
+                          </button>
+                        )}
+
+                        {canIssuePrescription && (
+                          <button
+                            type="button"
+                            disabled={isBusy}
+                            onClick={() => navigate(`/doctor/prescriptions/${appt._id}`)}
+                            className="w-full rounded-lg bg-white border border-indigo-200 px-4 py-2.5 text-xs font-bold text-indigo-700 transition hover:bg-indigo-50 disabled:opacity-50"
+                          >
+                            Issue Prescription
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* BOTTOM STRIP: Management Actions */}
+                    {(cancellable || completable) && (
+                      <div className="flex items-center justify-end gap-3 bg-slate-50/80 border-t border-slate-100 px-5 py-3">
+                        {cancellable && (
+                          <button
+                            type="button"
+                            disabled={isBusy}
+                            onClick={() => handleCancel(appt._id)}
+                            className="text-xs font-bold text-rose-600 transition hover:text-rose-800 disabled:opacity-50"
+                          >
+                            {isBusy ? "Wait..." : "Cancel Appointment"}
+                          </button>
+                        )}
+
+                        {completable && (
+                          <button
+                            type="button"
+                            disabled={isBusy}
+                            onClick={() => handleComplete(appt._id)}
+                            className="rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                          >
+                            {isBusy ? "Saving..." : "Mark as Completed"}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
+
+
+    </div>
+  );
+}
+
+// Helper Component for cleaner code
+function InfoBlock({ label, value }) {
+  return (
+    <div className="flex flex-col">
+      <span className="text-[10px] font-bold uppercase tracking-tight text-slate-400">
+        {label}
+      </span>
+      <span className="text-sm font-medium text-slate-700">
+        {value}
+      </span>
     </div>
   );
 }
