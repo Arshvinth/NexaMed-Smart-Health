@@ -5,6 +5,7 @@ import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import mongoose from "mongoose";
 import authRoutes from "./routes/authRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 dotenv.config({ path: "./src/.env" });
 
@@ -30,6 +31,8 @@ app.use((err, _req, res, _next) => {
   console.error("[user-service] error:", err);
   res.status(err.statusCode || 500).json({ message: err.message || "Internal server error" });
 });
+
+app.use("/api/admin", adminRoutes);
 
 const port = process.env.PORT || 5001;
 
