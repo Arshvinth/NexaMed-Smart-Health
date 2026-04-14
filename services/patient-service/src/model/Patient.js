@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const PatientSchema = new mongoose.Schema({
-    userid: {
+    userId: {
         type: String,
         required: true
     },
@@ -20,7 +20,7 @@ const PatientSchema = new mongoose.Schema({
     },
     medicalHistory: [String],
     bloodGroup: String,
-    currentmedication: [String],
+    currentMedication: [String],
     isActive: {
         type: Boolean,
         default: true
