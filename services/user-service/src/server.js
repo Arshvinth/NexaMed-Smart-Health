@@ -6,6 +6,7 @@ import rateLimit from "express-rate-limit";
 import mongoose from "mongoose";
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import { seedAdminIfNeeded } from "./config/seedAdmin.js";
 
 dotenv.config({ path: "./src/.env" });
 
@@ -42,6 +43,8 @@ async function start() {
 
   await mongoose.connect(process.env.MONGODB_URI);
   console.log("[user-service] MongoDB connected");
+
+  await seedAdminIfNeeded();
 
   app.listen(port, () => {
     console.log(`[user-service] running on ${port}`);
