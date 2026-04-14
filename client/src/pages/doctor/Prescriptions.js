@@ -334,37 +334,46 @@ export default function DoctorPrescriptions() {
         </div>
       ) : null}
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4 shadow-sm">
+      {/* Prescription List View Section - styled professionally */}
+      <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-slate-100 p-8 space-y-6 shadow-lg">
         {loading ? (
-          <p className="text-sm text-slate-600">Loading prescriptions...</p>
+          <div className="flex items-center justify-center min-h-[120px]">
+            <span className="text-base text-slate-600 animate-pulse">Loading prescriptions...</span>
+          </div>
         ) : prescriptions.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-8 text-center text-sm text-slate-500">
-            <p className="font-medium">No prescriptions found.</p>
-            <p className="max-w-md">
-              Once you issue prescriptions for your patients, they will appear here
-              for quick review and updates.
+          <div className="flex flex-col items-center justify-center gap-3 py-12 text-center text-slate-500">
+            <svg className="w-12 h-12 text-slate-300 mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2a4 4 0 014-4h2a4 4 0 014 4v2M9 17a4 4 0 01-4-4V7a4 4 0 014-4h6a4 4 0 014 4v6a4 4 0 01-4 4M9 17h6" />
+            </svg>
+            <p className="font-semibold text-lg">No prescriptions found</p>
+            <p className="max-w-md text-sm">
+              Once you issue prescriptions for your patients, they will appear here for quick review and updates.
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {/* Map through prescriptions returned from doctor-service */}
             {prescriptions.map((p) => {
+              // Derive a readable patient label; fall back to patientUserId
               const displayPatientName =
                 p.patientName ||
                 p.patientFullName ||
                 p.patient_user_name ||
                 p.patientUserId;
 
+              // Queue number is not stored on prescriptions today; if backend adds it later, show it
               const queueLabel =
-                typeof p.queueNumber === "number" || p.queueNumber
+                typeof p.queueNumber === "number"
                   ? `#${p.queueNumber}`
                   : "N/A";
 
+              // Prefer appointment time if backend enriches it; otherwise use prescription creation time
               const appointmentDateTime =
                 p.appointmentStartTime ||
                 p.startTime ||
-                p.appointmentTime ||
-                p.createdAt;
+                p.appointmentTime;
 
+              // Format the chosen timestamp for display
               const appointmentDateTimeLabel = appointmentDateTime
                 ? new Date(appointmentDateTime).toLocaleString()
                 : "N/A";
@@ -372,96 +381,97 @@ export default function DoctorPrescriptions() {
               return (
                 <div
                   key={p._id}
-                  className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3 shadow-sm hover:shadow-md transition-shadow"
+                  className="relative rounded-2xl border border-slate-200 bg-white p-6 space-y-4 shadow-md hover:shadow-xl transition-shadow duration-200 group"
                 >
+                  {/* Patient and appointment info */}
                   <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-700">
                     <div className="flex flex-col gap-1">
-                      <div className="flex flex-wrap gap-2">
-                        <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-800">
-                          <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <span className="inline-flex items-center rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-slate-800 shadow-sm">
+                          <span className="mr-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
                             Patient
                           </span>
                           {displayPatientName}
                         </span>
-                        <span className="inline-flex items-center rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-800">
-                          <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-sky-600">
+                        {/* <span className="inline-flex items-center rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800 shadow-sm">
+                          <span className="mr-1 text-[10px] font-bold uppercase tracking-wide text-sky-600">
                             Appointment
                           </span>
                           {p.appointmentId}
-                        </span>
+                        </span> */}
                       </div>
-                      <div className="flex flex-wrap gap-3 text-xs text-slate-600">
+                      <div className="flex flex-wrap gap-4 text-xs text-slate-600 mt-1">
                         <span>
-                          <span className="font-semibold text-slate-700">Queue #:</span>{" "}
-                          {queueLabel}
+                          {/* Queue number from appointment (usually N/A until backend sends it) */}
+                          <span className="font-semibold text-slate-700">Queue #:</span> {queueLabel}
                         </span>
                         <span>
-                          <span className="font-semibold text-slate-700">Date &amp; time:</span>{" "}
-                          {appointmentDateTimeLabel}
+                          {/* When appointment time is not enriched, this shows prescription creation time */}
+                          <span className="font-semibold text-slate-700">Issued at:</span> {appointmentDateTimeLabel}
                         </span>
                       </div>
                     </div>
                     <span className="text-xs text-slate-500 text-right">
-                      Created:{" "}
-                      <span className="font-medium text-slate-700">
-                        {p.createdAt
-                          ? new Date(p.createdAt).toLocaleString()
-                          : "N/A"}
+                      Created: <span className="font-medium text-slate-700">
+                        {p.createdAt ? new Date(p.createdAt).toLocaleString() : "N/A"}
                       </span>
                     </span>
                   </div>
 
-                {p.notes ? (
-                  <p className="rounded-lg bg-white/60 p-3 text-sm text-slate-700">
-                    <span className="font-semibold text-slate-900">Notes:</span>{" "}
-                    {p.notes}
-                  </p>
-                ) : null}
+                  {/* Notes section, if present */}
+                  {p.notes ? (
+                    <div className="rounded-lg bg-amber-50/80 border border-amber-100 p-3 text-sm text-slate-800 shadow-inner">
+                      <span className="font-semibold text-amber-900">Notes:</span> {p.notes}
+                    </div>
+                  ) : null}
 
-                {Array.isArray(p.items) && p.items.length > 0 ? (
-                  <div className="mt-2 space-y-1">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Medicines
-                    </p>
-                    <ul className="space-y-1 text-sm text-slate-700">
-                      {p.items.map((item, index) => (
-                        <li
-                          key={index}
-                          className="flex flex-wrap items-center gap-2 rounded-lg bg-slate-100 px-2 py-1"
-                        >
-                          <span className="font-semibold text-slate-900">
-                            {item.medicineName}
-                          </span>
-                          <span className="text-xs text-slate-500">•</span>
-                          <span>{item.dosage}</span>
-                          <span className="text-xs text-slate-500">•</span>
-                          <span>{item.frequency}</span>
-                          <span className="text-xs text-slate-500">•</span>
-                          <span>{item.durationDays} days</span>
-                        </li>
-                      ))}
-                    </ul>
+                  {/* Medicines list section */}
+                  {Array.isArray(p.items) && p.items.length > 0 ? (
+                    <div className="mt-2 space-y-2">
+                      <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">
+                        Medicines
+                      </p>
+                      <ul className="space-y-2 text-sm text-slate-700">
+                        {/* Render each medicine item */}
+                        {p.items.map((item, index) => (
+                          <li
+                            key={index}
+                            className="flex flex-wrap items-center gap-2 rounded-lg bg-slate-100 px-3 py-1 shadow-sm border border-slate-200"
+                          >
+                            <span className="font-semibold text-emerald-800">
+                              {item.medicineName}
+                            </span>
+                            <span className="text-xs text-slate-400">•</span>
+                            <span className="text-slate-700">{item.dosage}</span>
+                            <span className="text-xs text-slate-400">•</span>
+                            <span className="text-slate-700">{item.frequency}</span>
+                            <span className="text-xs text-slate-400">•</span>
+                            <span className="text-slate-700">{item.durationDays} days</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+
+                  {/* Action buttons (Update/Delete) - unchanged */}
+                  <div className="mt-4 flex flex-wrap justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openEdit(p)}
+                      className="rounded-lg bg-slate-100 px-4 py-2 text-xs font-bold text-slate-800 hover:bg-slate-200 transition-colors"
+                    >
+                      Update
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(p._id)}
+                      disabled={deletingId === p._id}
+                      className="rounded-lg bg-rose-100 px-4 py-2 text-xs font-bold text-rose-700 hover:bg-rose-200 disabled:opacity-60 transition-colors"
+                    >
+                      {deletingId === p._id ? "Deleting..." : "Delete"}
+                    </button>
                   </div>
-                ) : null}
-
-                <div className="mt-3 flex flex-wrap justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => openEdit(p)}
-                    className="rounded-lg bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-800 hover:bg-slate-200"
-                  >
-                    Update
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(p._id)}
-                    disabled={deletingId === p._id}
-                    className="rounded-lg bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-200 disabled:opacity-60"
-                  >
-                    {deletingId === p._id ? "Deleting..." : "Delete"}
-                  </button>
                 </div>
-              </div>
               );
             })}
           </div>
@@ -641,3 +651,4 @@ export default function DoctorPrescriptions() {
     </div>
   );
 }
+
