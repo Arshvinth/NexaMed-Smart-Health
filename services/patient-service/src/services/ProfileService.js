@@ -4,17 +4,17 @@ import logger from "../utils/Logger.js"
 
 
 // Service to get patient profile by ID
-export const getPatientProfiles = async (patientId) => {
+export const getPatientProfiles = async (userId) => {
 
-    if (!patientId) {
+    if (!userId) {
         logger.error('Patient ID is required to fetch profile');
         throw new Error("Patient Id is Required");
     }
 
-    const patientProfile = await Patient.findById(patientId);
+    const patientProfile = await Patient.findOne({ userId });
 
     if (!patientProfile) {
-        logger.error(`No patient found with ID: ${patientId}`);
+        logger.error(`No patient found with ID: ${userId}`);
         throw new Error("Patient Not Found");
 
     }
@@ -22,19 +22,23 @@ export const getPatientProfiles = async (patientId) => {
     return patientProfile;
 }
 
-// Service to update patient profile
-export const updatePatientProfiles = async (patientId, updateData) => {
 
-    if (!patientId) {
+
+// Service to update patient profile
+export const updatePatientProfiles = async (userId, updateData) => {
+
+    if (!userId) {
         logger.error('Patient ID is required to update profile');
         throw new Error("Patient Id is Required");
     }
 
-    const updatedProfile = await Patient.findByIdAndUpdate(patientId, updateData,
+    const updatedProfile = await Patient.findOneAndUpdate(
+        { userId },
+        updateData,
         { new: true, runValidators: true }
     )
     if (!updatedProfile) {
-        logger.error(`No patient found with ID: ${patientId} to update`);
+        logger.error(`No patient found with ID: ${userId} to update`);
         throw new Error("Patient Not Found");
     }
 
@@ -42,16 +46,16 @@ export const updatePatientProfiles = async (patientId, updateData) => {
 }
 
 //delete patient profile
-export const deletePatientProfiles = async (patientid) => {
+export const deletePatientProfiles = async (userId) => {
 
-    if (!patientid) {
+    if (!userId) {
         logger.error('Patient ID is required to delete profile');
         throw new Error("Patient Id is Required");
     }
 
-    const deletedProfile = await Patient.findByIdAndDelete(patientid);
+    const deletedProfile = await Patient.findOneAndDelete({ userId });
     if (!deletedProfile) {
-        logger.error(`No patient found with ID: ${patientid} to delete`);
+        logger.error(`No patient found with ID: ${userId} to delete`);
         throw new Error("Patient Not Found");
     }
 
