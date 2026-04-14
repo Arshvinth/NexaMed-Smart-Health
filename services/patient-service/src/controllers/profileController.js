@@ -4,8 +4,8 @@ import logger from "../utils/Logger.js";
 
 export const getPatientprofile = async (req, res) => {
     try {
-        const { patientid } = req.params;
-        const PatientProfile = await getPatientProfiles(patientid);
+        const userId = req.user.userId;
+        const PatientProfile = await getPatientProfiles(userId);
         logger.info(`Patient profile with ID ${patientid} fetched successfully`);
         res.status(200).json({ data: PatientProfile });
     } catch (error) {
@@ -16,25 +16,25 @@ export const getPatientprofile = async (req, res) => {
 
 export const updatePatientProfile = async (req, res) => {
     try {
-        const { patientid } = req.params;
+        const userId = req.user.userId;
         const updateData = req.body;
-        const updatedProfile = await updatePatientProfiles(patientid, updateData);
-        logger.info(`Patient profile with ID ${patientid} updated successfully`);
+        const updatedProfile = await updatePatientProfiles(userId, updateData);
+        logger.info(`Patient profile with ID ${userId} updated successfully`);
         res.status(200).json({ data: updatedProfile });
     } catch (error) {
-        logger.error(`Error updating patient profile with ID ${req.params.patientid}: ${error.message}`);
+        logger.error(`Error updating patient profile with ID ${userId}: ${error.message}`);
         res.status(500).json({ message: "Internal Server Error" });
     }
 }
 
 export const deletePatientProfile = async (req, res) => {
     try {
-        const { patientid } = req.params;
-        const deletedProfile = await deletePatientProfiles(patientid);
-        logger.info(`Patient profile with ID ${patientid} deleted successfully`);
+        const userId = req.user.userId;
+        const deletedProfile = await deletePatientProfiles(userId);
+        logger.info(`Patient profile with ID ${userId} deleted successfully`);
         res.status(200).json({ data: deletedProfile });
     } catch (error) {
-        logger.error(`Error deleting patient profile with ID ${req.params.patientid}: ${error.message}`);
+        logger.error(`Error deleting patient profile with ID ${userId}: ${error.message}`);
         res.status(500).json({ message: "Internal Server Error" });
     }
 }
