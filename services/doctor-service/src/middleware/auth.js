@@ -1,16 +1,11 @@
-/**
- * AUTH_MODE=dev:
- *   Accept headers:
- *   - x-user-id
- *   - x-role (DOCTOR|PATIENT|ADMIN)
- *   - x-verification-status (VERIFIED|PENDING|REJECTED) optional
- *
- * AUTH_MODE=jwt:
- *   placeholder (implement after user-service)
- */
+import jwt from "jsonwebtoken";
+
 export function auth(req, res, next) {
   const mode = (process.env.AUTH_MODE || "dev").toLowerCase();
 
+  // -----------------------------
+  // DEV MODE
+  // -----------------------------
   if (mode === "dev") {
     const userId = req.header("x-user-id");
     const role = req.header("x-role");
@@ -22,12 +17,54 @@ export function auth(req, res, next) {
       });
     }
 
-    // Health endpoint for Kubernetes readiness/liveness checks
     req.user = { userId, role, verificationStatus };
     return next();
   }
-  // Later: implement JWT verification using Authorization: Bearer <token>
-  return res.status(501).json({
-    message: "JWT auth not implemented yet. Use AUTH_MODE=dev for now.",
+
+  // -----------------------------
+  // JWT MODE
+  // -----------------------------
+  if (mode === "jwt") {
+    const authHeader = req.header("authorization") || "";
+    const [scheme, token] = authHeader.split(" ");
+
+    if (scheme !== "Bearer" || !token) {
+      return res.status(401).json({
+        message: "Missing or invalid Authorization header (Bearer token required)",
+      });
+    }
+
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      return res.status(500).json({
+        message: "JWT_SECRET is not configured in doctor-service",
+      });
+    }
+
+    try {
+      const decoded = jwt.verify(token, secret);
+
+      // expected claims from user-service
+      if (!decoded?.userId || !decoded?.role) {
+        return res.status(401).json({ message: "Token payload is invalid" });
+      }
+
+      req.user = {
+        userId: decoded.userId,
+        role: decoded.role,
+        verificationStatus: decoded.verificationStatus || "PENDING",
+      };
+
+      return next();
+    } catch (err) {
+      return res.status(401).json({
+        message: "Invalid or expired token",
+      });
+    }
+  }
+
+  // Unknown AUTH_MODE
+  return res.status(500).json({
+    message: `Unsupported AUTH_MODE: ${process.env.AUTH_MODE}`,
   });
 }
