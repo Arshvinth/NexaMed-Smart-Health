@@ -27,3 +27,35 @@ export const getPrescriptionsByPatient = async (patientId) => {
     return await Prescription.find({ patientId }).sort({ uploadedAt: -1 });
 };
 
+export const getPatientByPrescrioption = async (doctorId) => {
+
+    if (!doctorId) {
+        throw new Error("Doctor Id is required");
+    }
+
+    //get all prescriptions
+    const prescriptions = await Prescription.find({ doctorId })
+        .populate("patientId");
+
+    if (!prescriptions.length) {
+        throw new Error("No Patients found for this doctor");
+
+    }
+
+    //get distinct patients
+    const uniquePatients = [];
+    const seen = new Set();
+
+    prescriptions.forEach(p => {
+        if (p.patientId && !seen.has(p.patientId._id.toString())) {
+            seen.add(p.patientId._id.toString());
+            uniquePatients.push(p.patientId);
+        }
+
+    });
+
+    return uniquePatients;
+}
+
+
+
