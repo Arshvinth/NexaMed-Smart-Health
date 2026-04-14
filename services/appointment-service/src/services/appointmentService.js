@@ -55,9 +55,8 @@ export async function confirmAppointment(appointmentId, paymentId, amount, user)
   const telemedicineUrl =
     process.env.TELEMEDICINE_SERVICE_URL || "http://telemedicine-service:5005";
   const headers = {};
-  if (user) {
-    if (user.userId) headers["x-user-id"] = user.userId;
-    if (user.role) headers["x-role"] = user.role;
+  if (user?.token) {
+    headers["authorization"] = `Bearer ${user.token}`;
   }
 
   const sessionRes = await axios.post(
