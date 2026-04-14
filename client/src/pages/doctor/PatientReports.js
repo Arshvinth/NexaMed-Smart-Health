@@ -1,16 +1,422 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 
+// API gateway for doctor + appointments
+const API_GATEWAY_BASE_URL =
+  process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
+
+// Direct patient-service base URL (not behind gateway yet)
+const PATIENT_SERVICE_BASE_URL =
+  process.env.REACT_APP_PATIENT_SERVICE_URL || "http://localhost:8080";
+
+// Dev auth headers used by other doctor pages (same pattern)
+const DEV_AUTH = {
+  userId: process.env.REACT_APP_DOCTOR_USER_ID || "doc1",
+  role: "DOCTOR",
+  verificationStatus:
+    process.env.REACT_APP_DOCTOR_VERIFICATION_STATUS || "VERIFIED",
+};
+
+function getAuthHeaders() {
+  const storedUserId = localStorage.getItem("x-user-id");
+  const storedRole = localStorage.getItem("x-role");
+  const storedVerification = localStorage.getItem("x-verification-status");
+
+  return {
+    "Content-Type": "application/json",
+    "x-user-id": storedUserId || DEV_AUTH.userId,
+    "x-role": storedRole || DEV_AUTH.role,
+    "x-verification-status":
+      storedVerification || DEV_AUTH.verificationStatus,
+  };
+}
+
+// Load confirmed appointments for the logged-in doctor
+async function fetchDoctorAppointments() {
+  const res = await fetch(
+    `${API_GATEWAY_BASE_URL}/api/appointments/me?status=confirmed`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(),
+    },
+  );
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to load appointments.");
+  }
+
+  return res.json();
+}
+
+// Fetch all patient profiles from patient-service
+async function fetchAllPatients() {
+  const res = await fetch(`${PATIENT_SERVICE_BASE_URL}/api/patients`);
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to load patient profiles.");
+  }
+
+  const data = await res.json();
+  return Array.isArray(data?.data) ? data.data : [];
+}
+
+// Fetch medical reports for a specific patient (by Patient _id)
+async function fetchMedicalReports(patientMongoId) {
+  const res = await fetch(
+    `${PATIENT_SERVICE_BASE_URL}/api/medical-reports/${patientMongoId}`,
+  );
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to load medical reports.");
+  }
+
+  const data = await res.json();
+  return Array.isArray(data?.data) ? data.data : [];
+}
+
 export default function PatientReports() {
-  const { patientId } = useParams();
+  // Route param holds patient userId (e.g., "pat1") when navigated with it
+  const { patientId: routePatientUserId } = useParams();
+
+  const [appointments, setAppointments] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const [selectedPatientUserId, setSelectedPatientUserId] = useState(
+    routePatientUserId || "",
+  );
+  const [reports, setReports] = useState([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [reportsError, setReportsError] = useState("");
+
+  // Load doctor appointments + all patient profiles on first render
+  useEffect(() => {
+    let active = true;
+
+    async function load() {
+      setLoading(true);
+      setError("");
+
+      try {
+        const [apptData, patientData] = await Promise.all([
+          fetchDoctorAppointments(),
+          fetchAllPatients(),
+        ]);
+
+        if (!active) return;
+
+        setAppointments(Array.isArray(apptData) ? apptData : []);
+        setPatients(patientData);
+      } catch (e) {
+        if (!active) return;
+        setError(e?.message || "Unable to load patient reports.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    load();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Compute patients that actually have appointments with this doctor
+  const doctorPatients = useMemo(() => {
+    // Build a set of patient userIds from appointments
+    const userIdSet = new Set(
+      appointments
+        .filter((a) => a && a.patientUserId)
+        .map((a) => a.patientUserId),
+    );
+
+    // Attach profile info where available
+    return Array.from(userIdSet).map((userId) => {
+      const profile = patients.find((p) => p.userId === userId) || null;
+
+      // Gather this patient's appointments for quick stats
+      const patientAppointments = appointments.filter(
+        (a) => a.patientUserId === userId,
+      );
+
+      const lastAppointment = patientAppointments
+        .slice()
+        .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))[0];
+
+      return {
+        userId,
+        profile,
+        appointments: patientAppointments,
+        lastAppointment,
+      };
+    });
+  }, [appointments, patients]);
+
+  // Find the currently selected patient (by userId) from computed list
+  const selectedPatient = useMemo(
+    () =>
+      doctorPatients.find((p) => p.userId === selectedPatientUserId) || null,
+    [doctorPatients, selectedPatientUserId],
+  );
+
+  // Load medical reports when a patient selection changes and profile is known
+  useEffect(() => {
+    if (!selectedPatient || !selectedPatient.profile?._id) {
+      setReports([]);
+      setReportsError("");
+      return;
+    }
+
+    let active = true;
+
+    async function loadReports() {
+      setReportsLoading(true);
+      setReportsError("");
+      try {
+        const data = await fetchMedicalReports(selectedPatient.profile._id);
+        if (!active) return;
+        setReports(data);
+      } catch (e) {
+        if (!active) return;
+        setReportsError(e?.message || "Unable to load medical reports.");
+      } finally {
+        if (active) setReportsLoading(false);
+      }
+    }
+
+    loadReports();
+
+    return () => {
+      active = false;
+    };
+  }, [selectedPatient]);
+
+  const hasPatients = doctorPatients.length > 0;
+
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-extrabold">Patient Reports</h1>
-      <div className="rounded-2xl border border-slate-200 bg-white p-6">
-        <p className="text-slate-600">
-          Patient: <span className="font-semibold">{patientId || "(select one)"}</span>
-        </p>
-        <p className="mt-3 text-slate-600">View uploaded reports (UI only).</p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
+            Patient Reports
+          </h1>
+          <p className="text-sm text-slate-500">
+            View patient profiles and uploaded reports for your confirmed appointments.
+          </p>
+        </div>
+      </div>
+
+      {error ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+          {error}
+        </div>
+      ) : null}
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        {/* Left: list of patients with confirmed appointments */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-slate-800 uppercase tracking-wide">
+            Patients
+          </h2>
+
+          {loading ? (
+            <p className="text-sm text-slate-600">Loading patients...</p>
+          ) : !hasPatients ? (
+            <p className="text-sm text-slate-600">
+              No patients found for your confirmed appointments yet.
+            </p>
+          ) : (
+            <ul className="space-y-2 max-h-80 overflow-y-auto pr-1">
+              {doctorPatients.map((p) => {
+                const isSelected = p.userId === selectedPatientUserId;
+                const lastApptTime = p.lastAppointment?.startTime
+                  ? new Date(p.lastAppointment.startTime).toLocaleString()
+                  : "N/A";
+
+                return (
+                  <li key={p.userId}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPatientUserId(p.userId)}
+                      className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition-colors ${
+                        isSelected
+                          ? "border-sky-500 bg-sky-50/80 text-slate-900"
+                          : "border-slate-200 bg-slate-50/60 hover:bg-slate-100"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <div className="font-semibold text-slate-900">
+                            {p.profile?.fullName || p.userId}
+                          </div>
+                          <div className="text-xs text-slate-500 mt-0.5">
+                            Last appointment: {lastApptTime}
+                          </div>
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {p.appointments.length} appt(s)
+                        </div>
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        {/* Right: details and reports for the selected patient */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
+          {!selectedPatient ? (
+            <p className="text-sm text-slate-600">
+              Select a patient on the left to view profile and reports.
+            </p>
+          ) : (
+            <>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">
+                    {selectedPatient.profile?.fullName ||
+                      selectedPatient.userId}
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    User ID: {selectedPatient.userId}
+                  </p>
+                </div>
+                <div className="text-xs text-slate-500 text-right">
+                  Total appointments: {selectedPatient.appointments.length}
+                </div>
+              </div>
+
+              {/* Basic profile snapshot from patient-service */}
+              {selectedPatient.profile ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 space-y-1">
+                  <div>
+                    <span className="font-semibold">Gender:</span>{" "}
+                    {selectedPatient.profile.gender || "N/A"}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Birth date:</span>{" "}
+                    {selectedPatient.profile.birthDay
+                      ? new Date(
+                          selectedPatient.profile.birthDay,
+                        ).toLocaleDateString()
+                      : "N/A"}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Blood group:</span>{" "}
+                    {selectedPatient.profile.bloodGroup || "N/A"}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Address:</span>{" "}
+                    {selectedPatient.profile.address?.line || "-"},{" "}
+                    {selectedPatient.profile.address?.city || "-"},{" "}
+                    {selectedPatient.profile.address?.country || "-"}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">
+                  No profile info found in patient service for this user yet.
+                </p>
+              )}
+
+              {/* Appointment history for this patient with the doctor */}
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-slate-800">
+                  Appointment History
+                </h3>
+                {selectedPatient.appointments.length === 0 ? (
+                  <p className="text-xs text-slate-500">
+                    No appointments recorded.
+                  </p>
+                ) : (
+                  <div className="max-h-40 overflow-y-auto border border-slate-200 rounded-xl">
+                    <table className="min-w-full text-xs">
+                      <thead className="bg-slate-50 text-slate-600">
+                        <tr>
+                          <th className="px-3 py-2 text-left font-semibold">
+                            Date &amp; time
+                          </th>
+                          <th className="px-3 py-2 text-left font-semibold">
+                            Queue
+                          </th>
+                          <th className="px-3 py-2 text-left font-semibold">
+                            Status
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {selectedPatient.appointments.map((a) => (
+                          <tr key={a._id} className="hover:bg-slate-50">
+                            <td className="px-3 py-1.5">
+                              {a.startTime
+                                ? new Date(a.startTime).toLocaleString()
+                                : "N/A"}
+                            </td>
+                            <td className="px-3 py-1.5">
+                              {typeof a.queueNumber === "number"
+                                ? `#${a.queueNumber}`
+                                : "N/A"}
+                            </td>
+                            <td className="px-3 py-1.5 capitalize">
+                              {a.status || "-"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* Medical reports list from patient-service for this patient */}
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-slate-800">
+                  Uploaded Medical Reports
+                </h3>
+                {reportsError ? (
+                  <p className="text-xs text-rose-600">{reportsError}</p>
+                ) : reportsLoading ? (
+                  <p className="text-xs text-slate-500">Loading reports...</p>
+                ) : reports.length === 0 ? (
+                  <p className="text-xs text-slate-500">
+                    No medical reports uploaded for this patient yet.
+                  </p>
+                ) : (
+                  <ul className="space-y-1 max-h-40 overflow-y-auto pr-1 text-xs text-slate-700">
+                    {reports.map((r) => (
+                      <li
+                        key={r._id}
+                        className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5"
+                      >
+                        <div className="truncate">
+                          <a
+                            href={r.file?.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-sky-700 hover:underline truncate"
+                          >
+                            {r.file?.url || "Open report"}
+                          </a>
+                        </div>
+                        <div className="text-[11px] text-slate-500 whitespace-nowrap">
+                          {r.uploadedAt
+                            ? new Date(r.uploadedAt).toLocaleString()
+                            : ""}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
