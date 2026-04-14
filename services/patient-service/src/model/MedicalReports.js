@@ -6,6 +6,22 @@ const MedicalReportSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Patient"
     },
+    doctorId: {
+        type: String,
+        required: true
+    },
+    title: {
+        type: String,
+        required: true
+    },
+
+    description: String,
+
+    reportType: {
+        type: String,
+        enum: ["Lab Test", "Scan", "Other"]
+    },
+    diagnosis: String,
     file: {
         url: String
     },

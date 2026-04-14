@@ -1,7 +1,7 @@
 import MedicalReport from '../model/MedicalReports.js';
 import { uploadToCloudinary } from '../middleware/upload.js';
 
-export const uploadMedicalReports = async (files, patientId) => {
+export const uploadMedicalReports = async (files, body) => {
     const uploadedReports = [];
 
     for (const file of files) {
@@ -9,7 +9,12 @@ export const uploadMedicalReports = async (files, patientId) => {
         const result = await uploadToCloudinary(file, 'medical-reports');
 
         const medicalReport = new MedicalReport({
-            patientId: patientId,
+            patientId: body.patientId,
+            doctorId: body.doctorId,
+            title: body.title,
+            description: body.description,
+            reportType: body.reportType,
+            diagnosis: body.diagnosis,
             file: {
                 url: result.secure_url
             }
@@ -26,11 +31,25 @@ export const getMedicalReportsByPatient = async (patientId) => {
     return await MedicalReport.find({ patientId }).sort({ uploadedAt: -1 });
 };
 
+export const viewMedicalReportByDoctor = async (doctorId) => {
+    return await MedicalReport.find({ doctorId }).sort({ uploadedAt: -1 })
+}
 
 //update medical Reports
-export const updateMedicalReport = async (reportId, file) => {
+export const updateMedicalReport = async (reportId, files, body) => {
 
-    const result = await uploadToCloudinary(file, 'medical-reports');
+    let updateData = {};
+
+    if (files && files.length > 0) {
+        const result = await uploadToCloudinary(files[0], 'medical-reports');
+        updateData.file = { url: result.secure_url };
+    }
+
+    if (body.title) updateData.title = body.title;
+    if (body.description) updateData.description = body.description;
+    if (body.reportType) updateData.reportType = body.reportType;
+    if (body.diagnosis) updateData.diagnosis = body.diagnosis;
+
 
     const updatedReport = await MedicalReport.findByIdAndUpdate(
         reportId,

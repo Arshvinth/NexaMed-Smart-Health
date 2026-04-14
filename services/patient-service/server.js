@@ -12,6 +12,7 @@ import logger from "./src/utils/Logger.js";
 import medicalReportsRouter from "./src/route/medicalReports.js";
 import prescriptionsRouter from "./src/route/prescriptions.js";
 import profileRouter from "./src/route/profileRoute.js";
+import predictRoute from "./src/route/predictRoute.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,6 +46,9 @@ app.use("/api", limitter);
 app.use('/api/medical-reports', medicalReportsRouter);
 app.use('/api/prescriptions', prescriptionsRouter);
 app.use('/api/patients', profileRouter);
+app.use('/api/prediction', predictRoute)
+
+
 
 // Error handling for multer
 app.use((error, req, res, next) => {

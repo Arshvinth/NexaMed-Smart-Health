@@ -2,6 +2,7 @@
 import { deletePatientProfiles, getAllProfiles, getPatientProfiles, updatePatientProfiles } from "../services/ProfileService.js";
 import logger from "../utils/Logger.js";
 
+
 export const getPatientprofile = async (req, res) => {
     try {
         const userId = req.user.userId;
@@ -13,6 +14,7 @@ export const getPatientprofile = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 }
+
 
 export const updatePatientProfile = async (req, res) => {
     try {
@@ -27,6 +29,7 @@ export const updatePatientProfile = async (req, res) => {
     }
 }
 
+
 export const deletePatientProfile = async (req, res) => {
     try {
         const userId = req.user.userId;
@@ -38,6 +41,7 @@ export const deletePatientProfile = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 }
+
 
 export const getAllPatients = async (req, res) => {
     try {

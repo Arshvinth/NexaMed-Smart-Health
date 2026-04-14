@@ -1,6 +1,6 @@
 import express from 'express';
 import { uploadMedicalReports } from '../middleware/upload.js';
-import { uploadMedicalReport, getMedicalReports } from '../controllers/MedicalReportsController.js';
+import { uploadMedicalReport, getMedicalReports, viewMedicalReportByDoctor } from '../controllers/MedicalReportsController.js';
 import { updateMedicalReport } from '../services/MedicalReportsService.js';
 
 const router = express.Router();
@@ -10,6 +10,9 @@ router.post('/upload', uploadMedicalReports.array('files', 10), uploadMedicalRep
 
 // Get medical reports for a patient
 router.get('/:patientId', getMedicalReports);
+
+//get medical report by doctor
+router.get("/reports/doctor", viewMedicalReportByDoctor);
 
 //Update medical report
 router.put('/update/:reportId', uploadMedicalReports.single('file'), updateMedicalReport);
