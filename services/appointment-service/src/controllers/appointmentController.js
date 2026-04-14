@@ -75,12 +75,10 @@ export async function postAppointment(req, res) {
 export async function putConfirmAppointment(req, res) {
   const { id } = req.params;
   const { paymentId, amount } = req.body;
-  const appointment = await confirmAppointment(
-    id,
-    paymentId,
-    amount,
-    req.user,
-  );
+  const appointment = await confirmAppointment(id, paymentId, amount, {
+    ...req.user,
+    token: (req.header("authorization") || "").replace(/^Bearer\s+/i, ""),
+  });
   emitAppointmentUpdate(appointment, "appointment_confirmed");
   res.json(appointment);
 }
