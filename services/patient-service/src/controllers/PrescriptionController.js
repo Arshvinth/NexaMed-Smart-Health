@@ -34,3 +34,15 @@ export const getPrescriptions = async (req, res) => {
 };
 
 
+export const getDoctorPatientsFromPrescription = async (req, res) => {
+    try {
+        const { doctorId } = req.params;
+
+        const patients = await getPatientsByDoctor(doctorId);
+
+        res.status(200).json({ data: patients });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
