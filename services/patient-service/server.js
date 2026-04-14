@@ -1,15 +1,22 @@
+import path from "path";
+import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
+import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import multer from "multer";
-import connectDB from "./src/config/db";
-import logger from "./src/utils/Logger";
+import connectDB from "./src/config/db.js";
+import logger from "./src/utils/Logger.js";
 import medicalReportsRouter from "./src/route/medicalReports.js";
 import prescriptionsRouter from "./src/route/prescriptions.js";
+import profileRouter from "./src/route/profileRoute.js";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 const app = express();
 
@@ -37,6 +44,7 @@ app.use("/api", limitter);
 // Routes
 app.use('/api/medical-reports', medicalReportsRouter);
 app.use('/api/prescriptions', prescriptionsRouter);
+app.use('/api/patients', profileRouter);
 
 // Error handling for multer
 app.use((error, req, res, next) => {
