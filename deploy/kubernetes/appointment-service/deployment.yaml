@@ -23,8 +23,16 @@ spec:
               value: "5003"
             - name: NODE_ENV
               value: "production"
-            - name: AUTH_MODE
-              value: "dev"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: secret
+            - name: INTERNAL_API_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: internal-secret
+                  key: secret
             - name: MONGODB_URI
               value: "mongodb://mongo:27017/appointment_service"
             - name: CORS_ORIGIN

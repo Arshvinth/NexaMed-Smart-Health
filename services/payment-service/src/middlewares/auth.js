@@ -1,18 +1,21 @@
+// middleware/auth.js
+import jwt from "jsonwebtoken";
+
 export function auth(req, res, next) {
-  const mode = (process.env.AUTH_MODE || "dev").toLowerCase();
-
-  if (mode === "dev") {
-    const userId = req.header("x-user-id");
-    const role = req.header("x-role");
-    const verificationStatus =
-      req.header("x-verification-status") || "VERIFIED";
-
-    if (!userId || !role) {
-      return res.status(401).json({ message: "Missing dev auth headers" });
-    }
-    req.user = { userId, role, verificationStatus };
-    return next();
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Missing or invalid token" });
   }
-
-  return res.status(501).json({ message: "JWT auth not implemented" });
+  const token = authHeader.split(" ")[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = {
+      userId: decoded.userId,
+      role: decoded.role,
+      verificationStatus: decoded.verificationStatus,
+    };
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid or expired token" });
+  }
 }
