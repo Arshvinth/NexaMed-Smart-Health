@@ -4,11 +4,11 @@ import { Link } from "react-router-dom";
 const API_GATEWAY_BASE_URL =
   process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
 
-const DEV_AUTH = {
-  userId: process.env.REACT_APP_DOCTOR_USER_ID || "doc1",
-  role: "DOCTOR",
-  verificationStatus: process.env.REACT_APP_DOCTOR_VERIFICATION_STATUS || "VERIFIED",
-};
+// const DEV_AUTH = {
+//   userId: process.env.REACT_APP_DOCTOR_USER_ID || "doc1",
+//   role: "DOCTOR",
+//   verificationStatus: process.env.REACT_APP_DOCTOR_VERIFICATION_STATUS || "VERIFIED",
+// };
 
 function getAuthHeaders() {  
   const userDetails = JSON.parse(localStorage.getItem('user'));
@@ -18,21 +18,11 @@ function getAuthHeaders() {
   const storedRole = userDetails?.role || localStorage.getItem("x-role");
   const storedVerification = userDetails?.verificationStatus || localStorage.getItem("x-verification-status");
 
-  // const storedUserId = localStorage.getItem("x-user-id");
-  // const storedRole = localStorage.getItem("x-role");
-  // const storedVerification = localStorage.getItem("x-verification-status");
-
-  console.log("Auth hreader - Token and user details from localStorage:", {
-    token,
-    storedUserId,
-    storedRole,
-    storedVerification,
-  });
   return {
     "authorization": `Bearer ${token}`,
-    "x-user-id": storedUserId || DEV_AUTH.userId,
-    "x-role": storedRole || DEV_AUTH.role,
-    "x-verification-status": storedVerification || DEV_AUTH.verificationStatus,
+    "x-user-id": storedUserId ,
+    "x-role": storedRole,
+    "x-verification-status": storedVerification
   };
 }
 
@@ -71,7 +61,12 @@ async function loadDashboardData() {
 
   console.log("Dashboard data results:", { profileResult, availabilityResult, prescriptionsResult });
 
+  //retrieve logged in doctor details from local storage
+  const userDetails = JSON.parse(localStorage.getItem('user'));
+  console.log("Retrieved user details from localStorage:", userDetails);
+
   return {
+    doctorDetail: userDetails || null,
     profile: profileResult.status === "fulfilled" ? profileResult.value : null,
     availability:
       availabilityResult.status === "fulfilled" && Array.isArray(availabilityResult.value)
@@ -96,6 +91,8 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   const [lastSyncedAt, setLastSyncedAt] = useState(null);
 
+  const [doctorDetail, setDoctorDetail] = useState(null);
+
   const loadDashboard = useCallback(async ({ background = false } = {}) => {
     if (background) {
       setRefreshing(true);
@@ -114,6 +111,7 @@ export default function Dashboard() {
 
       setAvailability(result.availability);
       setPrescriptions(result.prescriptions);
+      setDoctorDetail(result.doctorDetail);
       setLastSyncedAt(new Date());
 
       if (result.failures.length) {
@@ -179,7 +177,7 @@ export default function Dashboard() {
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Verification"
-          value={profile?.verificationStatus || "Unknown"}
+          value={doctorDetail?.verificationStatus || "Unknown"}
           desc="Current account verification state"
         />
         <MetricCard
