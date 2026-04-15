@@ -57,7 +57,7 @@ services:
       NODE_ENV: "production"
       AUTH_MODE: "jwt"
       JWT_SECRET: "${JWT_SECRET}"
-      MONGODB_URI: "mongodb://mongo:27017/appointment_service"
+      MONGODB_URI: "${APPOINTMENT_MONGODB_URI:-mongodb://mongo:27017/appointment_service}"
       CORS_ORIGIN: "http://localhost:3000"
       DOCTOR_SERVICE_URL: "http://doctor-service:5002"
       TELEMEDICINE_SERVICE_URL: "http://telemedicine-service:5005"
