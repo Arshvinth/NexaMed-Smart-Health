@@ -1,30 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { getAuthHeaders } from "../../utils/userAuth";
 import { Link } from "react-router-dom";
 
 const API_GATEWAY_BASE_URL =
   process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
-
-// const DEV_AUTH = {
-//   userId: process.env.REACT_APP_DOCTOR_USER_ID || "doc1",
-//   role: "DOCTOR",
-//   verificationStatus: process.env.REACT_APP_DOCTOR_VERIFICATION_STATUS || "VERIFIED",
-// };
-
-function getAuthHeaders() {  
-  const userDetails = JSON.parse(localStorage.getItem('user'));
-  const token = localStorage.getItem("token");
-
-  const storedUserId = userDetails?.id || localStorage.getItem("x-user-id");
-  const storedRole = userDetails?.role || localStorage.getItem("x-role");
-  const storedVerification = userDetails?.verificationStatus || localStorage.getItem("x-verification-status");
-
-  return {
-    "authorization": `Bearer ${token}`,
-    "x-user-id": storedUserId ,
-    "x-role": storedRole,
-    "x-verification-status": storedVerification
-  };
-}
 
 async function fetchJson(path) {
   const response = await fetch(`${API_GATEWAY_BASE_URL}${path}`, {

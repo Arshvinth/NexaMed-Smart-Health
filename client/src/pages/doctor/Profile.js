@@ -1,13 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { getAuthHeaders } from "../../utils/userAuth";
 
 const API_GATEWAY_BASE_URL =
   process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
-
-const DEV_AUTH = {
-  userId: process.env.REACT_APP_DOCTOR_USER_ID || "doc1",
-  role: "DOCTOR",
-  verificationStatus: process.env.REACT_APP_DOCTOR_VERIFICATION_STATUS || "VERIFIED",
-};
 
 const INITIAL_FORM = {
   fullName: "",
@@ -18,18 +13,6 @@ const INITIAL_FORM = {
   fee: "0",
   bio: "",
 };
-
-function getAuthHeaders() {
-  const storedUserId = localStorage.getItem("x-user-id");
-  const storedRole = localStorage.getItem("x-role");
-  const storedVerification = localStorage.getItem("x-verification-status");
-
-  return {
-    "x-user-id": storedUserId || DEV_AUTH.userId,
-    "x-role": storedRole || DEV_AUTH.role,
-    "x-verification-status": storedVerification || DEV_AUTH.verificationStatus,
-  };
-}
 
 function mapProfileToForm(profile) {
   if (!profile) return INITIAL_FORM;
