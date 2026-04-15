@@ -10,12 +10,26 @@ const DEV_AUTH = {
   verificationStatus: process.env.REACT_APP_DOCTOR_VERIFICATION_STATUS || "VERIFIED",
 };
 
-function getAuthHeaders() {
-  const storedUserId = localStorage.getItem("x-user-id");
-  const storedRole = localStorage.getItem("x-role");
-  const storedVerification = localStorage.getItem("x-verification-status");
+function getAuthHeaders() {  
+  const userDetails = JSON.parse(localStorage.getItem('user'));
+  const token = localStorage.getItem("token");
 
+  const storedUserId = userDetails?.id || localStorage.getItem("x-user-id");
+  const storedRole = userDetails?.role || localStorage.getItem("x-role");
+  const storedVerification = userDetails?.verificationStatus || localStorage.getItem("x-verification-status");
+
+  // const storedUserId = localStorage.getItem("x-user-id");
+  // const storedRole = localStorage.getItem("x-role");
+  // const storedVerification = localStorage.getItem("x-verification-status");
+
+  console.log("Auth hreader - Token and user details from localStorage:", {
+    token,
+    storedUserId,
+    storedRole,
+    storedVerification,
+  });
   return {
+    "authorization": `Bearer ${token}`,
     "x-user-id": storedUserId || DEV_AUTH.userId,
     "x-role": storedRole || DEV_AUTH.role,
     "x-verification-status": storedVerification || DEV_AUTH.verificationStatus,
@@ -29,6 +43,9 @@ async function fetchJson(path) {
       "Content-Type": "application/json",
       ...getAuthHeaders(),
     },
+  }).catch((err) => {
+    console.error("Network error while fetching", path, err);
+    throw new Error(`Network error: ${err.message}`);
   });
 
   if (!response.ok) {
@@ -51,6 +68,8 @@ async function loadDashboardData() {
     fetchJson("/api/doctors/me/availability"),
     fetchJson("/api/prescriptions"),
   ]);
+
+  console.log("Dashboard data results:", { profileResult, availabilityResult, prescriptionsResult });
 
   return {
     profile: profileResult.status === "fulfilled" ? profileResult.value : null,

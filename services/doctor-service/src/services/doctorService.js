@@ -38,3 +38,8 @@ export async function listVerifiedDoctors({ specialization, q } = {}) {
 export async function getPublicDoctorById(doctorId) {
   return Doctor.findById(doctorId);
 }
+
+export async function createDoctor(payload) {
+  const doctor = new Doctor(payload);
+  return doctor.save();
+}

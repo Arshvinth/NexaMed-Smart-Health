@@ -2,7 +2,8 @@ import {
   getMyDoctorProfile,
   upsertMyDoctorProfile,
   listVerifiedDoctors,
-  getPublicDoctorById
+  getPublicDoctorById,
+  createDoctor
 } from "../services/doctorService.js";
 
 //GET /api/doctors/me/profile
@@ -55,5 +56,16 @@ export async function getDoctorById(req, res, next) {
     res.json(doc);
   } catch (e) {
     next(e);
+  }
+}
+
+
+export async function addDoctor(req, res, next) {
+  try {
+    const doctor = await createDoctor(req.body);
+    res.status(201).json(doctor);
+  } catch (e) {
+    //next(e);
+    res.status(500).json({ message: "Failed to create doctor profile", error: e.message });
   }
 }

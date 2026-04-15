@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { signupUser } from "../../api/authApi";
 
+const API_GATEWAY_BASE_URL =
+  process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
+
 export default function Signup() {
   const [role, setRole] = useState("patient");
   const [fullName, setFullName] = useState("");
@@ -31,7 +34,24 @@ export default function Signup() {
 
       // simple role-based redirect
       if (data.user.role === "PATIENT") navigate("/patient");
-      else if (data.user.role === "DOCTOR") navigate("/doctor");
+      else if (data.user.role === "DOCTOR") {
+        // navigate("/doctor");
+        // Call doctor-service to create doctor profile
+        console.log(`API Gateway Base URL: ${API_GATEWAY_BASE_URL}`);
+        console.log("Signup response data:", data.user);
+        const response = await fetch(`${API_GATEWAY_BASE_URL}/api/doctors/addDoctor`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: data.user.id,
+            fullName: data.user.fullName,
+            specialization: "NULL",
+            registrationNo: "NULL"
+          })
+        });
+        console.log("Doctor profile creation response:", response);
+        navigate("/doctor");
+      }
       else navigate("/");
     } catch (err) {
       setError(err?.response?.data?.message || "Signup failed");
