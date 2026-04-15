@@ -1,7 +1,9 @@
 import {
   registerPatient,
   registerDoctor,
-  login
+  login,
+  getUserById,
+  getCurrentUser
 } from "../services/authService.js";
 
 function sanitizeUser(user) {
@@ -11,7 +13,8 @@ function sanitizeUser(user) {
     email: user.email,
     role: user.role,
     verificationStatus: user.verificationStatus,
-    createdAt: user.createdAt
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt
   };
 }
 
@@ -52,6 +55,24 @@ export async function loginHandler(req, res, next) {
 
     const { user, token } = await login({ email, password });
     res.json({ user: sanitizeUser(user), token });
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function getUserByIdHandler(req, res, next) {
+  try {
+    const user = await getUserById(req.params.userId);
+    res.json(sanitizeUser(user));
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function getCurrentUserHandler(req, res, next) {
+  try {
+    const user = await getCurrentUser(req.user.userId);
+    res.json(sanitizeUser(user));
   } catch (e) {
     next(e);
   }
