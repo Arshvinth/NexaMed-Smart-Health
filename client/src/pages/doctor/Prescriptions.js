@@ -419,7 +419,7 @@ export default function DoctorPrescriptions() {
               const appointment = appointmentDetails[p.appointmentId];
               const queueLabel =
                 typeof appointment?.queueNumber === "number"
-                  ? `#${appointment.queueNumber}`
+                  ? `${appointment.queueNumber}`
                   : "N/A";
               const appointmentDateTime =
                 appointment?.startTime || appointment?.appointmentTime;
@@ -442,26 +442,20 @@ export default function DoctorPrescriptions() {
                           </span>
                           {displayPatientName}
                         </span>
-                        {/* <span className="inline-flex items-center rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800 shadow-sm">
-                          <span className="mr-1 text-[10px] font-bold uppercase tracking-wide text-sky-600">
-                            Appointment
-                          </span>
-                          {p.appointmentId}
-                        </span> */}
                       </div>
                       <div className="flex flex-wrap gap-4 text-xs text-slate-600 mt-1">
                         <span>
                           {/* Queue number from appointment (usually N/A until backend sends it) */}
-                          <span className="font-semibold text-slate-700">Queue #:</span> {queueLabel}
+                          <span className="font-semibold text-slate-700">Queue No:</span> {queueLabel}
                         </span>
                         <span>
                           {/* When appointment time is not enriched, this shows prescription creation time */}
-                          <span className="font-semibold text-slate-700">Issued at:</span> {appointmentDateTimeLabel}
+                          <span className="font-semibold text-slate-700">Appointment Date and time:</span> {appointmentDateTimeLabel}
                         </span>
                       </div>
                     </div>
                     <span className="text-xs text-slate-500 text-right">
-                      Created: <span className="font-medium text-slate-700">
+                      Issued At: <span className="font-medium text-slate-700">
                         {p.createdAt ? new Date(p.createdAt).toLocaleString() : "N/A"}
                       </span>
                     </span>
