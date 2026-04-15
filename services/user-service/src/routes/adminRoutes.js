@@ -3,7 +3,11 @@ import { auth } from "../middleware/auth.js";
 import { requireRole } from "../middleware/requireRole.js";
 import {
   getPendingDoctorsHandler,
-  updateDoctorStatusHandler
+  updateDoctorStatusHandler,
+  listUsersHandler,
+  createUserHandler,
+  updateUserHandler,
+  deleteUserHandler
 } from "../controllers/adminController.js";
 
 const router = Router();
@@ -16,5 +20,11 @@ router.patch(
   requireRole("ADMIN"),
   updateDoctorStatusHandler
 );
+
+// Admin user management
+router.get("/users", auth, requireRole("ADMIN"), listUsersHandler);
+router.post("/users", auth, requireRole("ADMIN"), createUserHandler);
+router.patch("/users/:userId", auth, requireRole("ADMIN"), updateUserHandler);
+router.delete("/users/:userId", auth, requireRole("ADMIN"), deleteUserHandler);
 
 export default router;
