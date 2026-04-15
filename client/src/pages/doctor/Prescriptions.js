@@ -104,6 +104,31 @@ async function deletePrescription(id) {
   }
 }
 
+async function parseErrorResponse(response) {
+  let message = "Request failed";
+  try {
+    const body = await response.json();
+    if (body?.message) message = body.message;
+  } catch (_error) {
+    // Keep fallback if response body is not JSON.
+  }
+  return `${response.status}: ${message}`;
+}
+
+async function listDoctorAppointments() {
+  const response = await fetch(`${API_GATEWAY_BASE_URL}/api/appointments/me`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseErrorResponse(response));
+  }
+
+  const data = await response.json();
+  return Array.isArray(data) ? data : [];
+}
+
 export default function DoctorPrescriptions() {
   const [prescriptions, setPrescriptions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -115,6 +140,26 @@ export default function DoctorPrescriptions() {
   const [savingEdit, setSavingEdit] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [formItemErrors, setFormItemErrors] = useState([]);
+
+  const [appointments, setAppointments] = useState([]);
+
+  async function load() {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await listDoctorAppointments();
+      setAppointments(data);
+    } catch (e) {
+      setError(e?.message || "Unable to load appointment requests.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
 
   useEffect(() => {
     let active = true;
@@ -149,13 +194,13 @@ export default function DoctorPrescriptions() {
       Array.isArray(p.items) && p.items.length > 0
         ? p.items.map((it) => ({ ...it, durationDays: String(it.durationDays || "") }))
         : [
-            {
-              medicineName: "",
-              dosage: "",
-              frequency: "",
-              durationDays: "",
-            },
-          ];
+          {
+            medicineName: "",
+            dosage: "",
+            frequency: "",
+            durationDays: "",
+          },
+        ];
 
     setFormItems(initialItems);
     setFormItemErrors(
@@ -315,6 +360,15 @@ export default function DoctorPrescriptions() {
     }
   }
 
+  // Build a map of appointmentId to appointment details for quick lookup
+  const appointmentDetails = React.useMemo(() => {
+    const map = {};
+    appointments.forEach((a) => {
+      if (a && a._id) map[a._id] = a;
+    });
+    return map;
+  }, [appointments]);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -361,19 +415,14 @@ export default function DoctorPrescriptions() {
                 p.patient_user_name ||
                 p.patientUserId;
 
-              // Queue number is not stored on prescriptions today; if backend adds it later, show it
+              // Get appointment details if available
+              const appointment = appointmentDetails[p.appointmentId];
               const queueLabel =
-                typeof p.queueNumber === "number"
-                  ? `#${p.queueNumber}`
+                typeof appointment?.queueNumber === "number"
+                  ? `#${appointment.queueNumber}`
                   : "N/A";
-
-              // Prefer appointment time if backend enriches it; otherwise use prescription creation time
               const appointmentDateTime =
-                p.appointmentStartTime ||
-                p.startTime ||
-                p.appointmentTime;
-
-              // Format the chosen timestamp for display
+                appointment?.startTime || appointment?.appointmentTime;
               const appointmentDateTimeLabel = appointmentDateTime
                 ? new Date(appointmentDateTime).toLocaleString()
                 : "N/A";
