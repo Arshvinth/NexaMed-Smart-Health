@@ -7,10 +7,10 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 const app = express();
 
 const gatewayPort = Number(process.env.PORT || 5000);
+const userServiceUrl = process.env.USER_SERVICE_URL || "http://localhost:5001";
 const doctorServiceUrl = process.env.DOCTOR_SERVICE_URL || "http://localhost:5002";
+const appointmentServiceUrl = process.env.APPOINTMENT_SERVICE_URL || "http://localhost:5003";
 const telemedicineServiceUrl = process.env.TELEMEDICINE_SERVICE_URL || "http://localhost:5005";
-const appointmentServiceUrl =
-  process.env.APPOINTMENT_SERVICE_URL || "http://localhost:5003";
 const corsOrigin = process.env.CORS_ORIGIN || "http://localhost:3000";
 
 app.use(
@@ -43,6 +43,7 @@ app.get("/health", (_req, res) => {
       doctor: doctorServiceUrl,
       appointment: appointmentServiceUrl,
       telemedicine: telemedicineServiceUrl,
+      user: userServiceUrl,
     },
   });
 });
@@ -61,6 +62,12 @@ function buildProxy(target, pathFilter) {
     },
   });
 }
+
+app.use(
+  buildProxy(userServiceUrl, (path) => {
+    return path.startsWith("/api/auth") || path.startsWith("/api/admin");
+  })
+);
 
 app.use(
   buildProxy(doctorServiceUrl, (path) => {
