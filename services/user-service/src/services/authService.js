@@ -79,6 +79,26 @@ export async function login({ email, password }) {
   return { user, token };
 }
 
+export async function getUserById(userId) {
+  const user = await User.findById(userId).select("-passwordHash");
+  if (!user) {
+    const err = new Error("User not found");
+    err.statusCode = 404;
+    throw err;
+  }
+  return user;
+}
+
+export async function getCurrentUser(userId) {
+  const user = await User.findById(userId).select("-passwordHash");
+  if (!user) {
+    const err = new Error("User not found");
+    err.statusCode = 404;
+    throw err;
+  }
+  return user;
+}
+
 export function verifyToken(token) {
   return jwt.verify(token, process.env.JWT_SECRET);
 }
