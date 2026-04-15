@@ -61,20 +61,20 @@ services:
       - doctor-service
       - telemedicine-service
   
-  # patient-service:
-  #   build:
-  #     context: ../../services/patient-service
-  #   container_name: shp-patient-service
-  #   restart: unless-stopped
-  #   ports:
-  #     - "8080:8080"
-  #   environment:
-  #     PORT: "8080"
-  #     NODE_ENV: "production"
-  #     MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/patient_service}
-  #     CORS_ORIGIN: "http://localhost:3000"
-  #   depends_on:
-  #     - mongo
+  patient-service:
+    build:
+      context: ../../services/patient-service
+    container_name: shp-patient-service
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      NODE_ENV: "production"
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/patient_service}
+      CORS_ORIGIN: "http://localhost:3000"
+    depends_on:
+      - mongo
 
   telemedicine-service:
     build:
