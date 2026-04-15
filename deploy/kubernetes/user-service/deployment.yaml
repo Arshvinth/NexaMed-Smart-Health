@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: user-service:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5001
+          env:
+            - name: PORT
+              value: "5001"
+            - name: NODE_ENV
+              value: "production"
+            - name: MONGODB_URI
+              value: "mongodb://mongo:27017/nexamed_users"
+            - name: JWT_EXPIRES_IN
+              value: "7d"
+            - name: CORS_ORIGIN
+              value: "http://localhost:3000"
+            - name: ADMIN_SEED_ENABLED
+              value: "true"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: JWT_SECRET
+            - name: ADMIN_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: ADMIN_NAME
+            - name: ADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: ADMIN_EMAIL
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: ADMIN_PASSWORD
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 10
+            periodSeconds: 20
