@@ -7,8 +7,8 @@ const API_GATEWAY_BASE_URL =
   process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
 
 // Direct patient-service base URL (not behind gateway yet)
-const PATIENT_SERVICE_BASE_URL =
-  process.env.REACT_APP_PATIENT_SERVICE_URL || "http://localhost:8080";
+// const PATIENT_SERVICE_BASE_URL =
+//   process.env.REACT_APP_PATIENT_SERVICE_URL || "http://localhost:8080";
 
 // Load confirmed appointments for the logged-in doctor
 async function fetchDoctorAppointments() {
@@ -30,7 +30,7 @@ async function fetchDoctorAppointments() {
 
 // Fetch all patient profiles from patient-service
 async function fetchAllPatients() {
-  const res = await fetch(`${PATIENT_SERVICE_BASE_URL}/api/patients`);
+  const res = await fetch(`${API_GATEWAY_BASE_URL}/api/patients`);
 
   if (!res.ok) {
     const body = await res.text();
@@ -44,7 +44,7 @@ async function fetchAllPatients() {
 // Fetch medical reports for a specific patient (by Patient _id)
 async function fetchMedicalReports(patientMongoId) {
   const res = await fetch(
-    `${PATIENT_SERVICE_BASE_URL}/api/medical-reports/${patientMongoId}`,
+    `${API_GATEWAY_BASE_URL}/api/medical-reports/${patientMongoId}`,
   );
 
   if (!res.ok) {
