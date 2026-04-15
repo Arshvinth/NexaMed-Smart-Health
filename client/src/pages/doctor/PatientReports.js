@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { getAuthHeaders } from "../../utils/userAuth";
 import { useParams } from "react-router-dom";
 
 // API gateway for doctor + appointments
@@ -8,28 +9,6 @@ const API_GATEWAY_BASE_URL =
 // Direct patient-service base URL (not behind gateway yet)
 const PATIENT_SERVICE_BASE_URL =
   process.env.REACT_APP_PATIENT_SERVICE_URL || "http://localhost:8080";
-
-// Dev auth headers used by other doctor pages (same pattern)
-const DEV_AUTH = {
-  userId: process.env.REACT_APP_DOCTOR_USER_ID || "doc1",
-  role: "DOCTOR",
-  verificationStatus:
-    process.env.REACT_APP_DOCTOR_VERIFICATION_STATUS || "VERIFIED",
-};
-
-function getAuthHeaders() {
-  const storedUserId = localStorage.getItem("x-user-id");
-  const storedRole = localStorage.getItem("x-role");
-  const storedVerification = localStorage.getItem("x-verification-status");
-
-  return {
-    "Content-Type": "application/json",
-    "x-user-id": storedUserId || DEV_AUTH.userId,
-    "x-role": storedRole || DEV_AUTH.role,
-    "x-verification-status":
-      storedVerification || DEV_AUTH.verificationStatus,
-  };
-}
 
 // Load confirmed appointments for the logged-in doctor
 async function fetchDoctorAppointments() {

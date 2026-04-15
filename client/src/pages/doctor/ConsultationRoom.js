@@ -1,29 +1,9 @@
 import React, { useEffect, useState } from "react";
+import { getAuthHeaders } from "../../utils/userAuth";
 import { useNavigate, useParams } from "react-router-dom";
 
 const API_GATEWAY_BASE_URL =
   process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
-
-const DEV_AUTH = {
-  userId: process.env.REACT_APP_DOCTOR_USER_ID || "doc1",
-  role: "DOCTOR",
-  verificationStatus:
-    process.env.REACT_APP_DOCTOR_VERIFICATION_STATUS || "VERIFIED",
-};
-
-function getAuthHeaders() {
-  const storedUserId = localStorage.getItem("x-user-id");
-  const storedRole = localStorage.getItem("x-role");
-  const storedVerification = localStorage.getItem("x-verification-status");
-
-  return {
-    "Content-Type": "application/json",
-    "x-user-id": storedUserId || DEV_AUTH.userId,
-    "x-role": storedRole || DEV_AUTH.role,
-    "x-verification-status":
-      storedVerification || DEV_AUTH.verificationStatus,
-  };
-}
 
 async function fetchConsultationSession(appointmentId) {
   const response = await fetch(

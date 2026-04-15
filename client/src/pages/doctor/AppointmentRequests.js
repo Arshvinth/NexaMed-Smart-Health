@@ -1,15 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getAuthHeaders } from "../../utils/userAuth";
 
 const API_GATEWAY_BASE_URL =
   process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
-
-const DEV_AUTH = {
-  userId: process.env.REACT_APP_DOCTOR_USER_ID || "doc1",
-  role: "DOCTOR",
-  verificationStatus:
-    process.env.REACT_APP_DOCTOR_VERIFICATION_STATUS || "VERIFIED",
-};
 
 const CANCELLABLE_STATUSES = ["pending", "confirmed"];
 const COMPLETABLE_STATUSES = ["confirmed"];
@@ -21,19 +15,6 @@ const FILTERS = [
   "cancelled_by_patient",
   "ALL",
 ];
-
-function getAuthHeaders() {
-  const storedUserId = localStorage.getItem("x-user-id");
-  const storedRole = localStorage.getItem("x-role");
-  const storedVerification = localStorage.getItem("x-verification-status");
-
-  return {
-    "Content-Type": "application/json",
-    "x-user-id": storedUserId || DEV_AUTH.userId,
-    "x-role": storedRole || DEV_AUTH.role,
-    "x-verification-status": storedVerification || DEV_AUTH.verificationStatus,
-  };
-}
 
 function getStatusLabel(status) {
   return status
