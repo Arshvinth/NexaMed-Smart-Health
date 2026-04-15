@@ -2,6 +2,7 @@ import { Router } from "express";
 import { auth } from "../middlewares/auth.js";
 import { requireRole } from "../middlewares/requireRole.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { internalAuth } from "../middlewares/internalAuth.js";
 import {
   getSlots,
   postAppointment,
@@ -14,15 +15,13 @@ import {
 } from "../controllers/appointmentController.js";
 
 const router = Router();
+
+router.put("/:id/confirm", internalAuth, asyncHandler(putConfirmAppointment));
+
 router.use(auth);
 
 router.get("/slots", asyncHandler(getSlots));
 router.post("/", requireRole("PATIENT"), asyncHandler(postAppointment));
-router.put(
-  "/:id/confirm",
-  requireRole("PATIENT"), // only PATIENT – but payment service will act as patient
-  asyncHandler(putConfirmAppointment),
-);
 router.patch(
   "/:id/cancel",
   requireRole("PATIENT", "DOCTOR"),

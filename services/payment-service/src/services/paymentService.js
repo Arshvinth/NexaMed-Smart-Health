@@ -2,6 +2,9 @@ import Payment from "../models/Payment.js";
 import stripe from "../config/stripe.js";
 import axios from "axios";
 
+const appointmentServiceUrl =
+  process.env.APPOINTMENT_SERVICE_URL || "http://appointment-service:5003";
+
 export async function createPaymentIntent({
   appointmentId,
   patientUserId,
@@ -66,16 +69,19 @@ export async function confirmPayment(paymentIntentId) {
     throw err;
   }
   // Call appointment service to confirm appointment
-  const appointmentServiceUrl =
-    process.env.APPOINTMENT_SERVICE_URL || "http://appointment-service:5003";
+  // Inside confirmPayment() function, after retrieving payment
   await axios.put(
     `${appointmentServiceUrl}/api/appointments/${payment.appointmentId}/confirm`,
     {
       paymentId: paymentIntent.id,
       amount: paymentIntent.amount / 100,
     },
+    {
+      headers: {
+        "X-Internal-Secret": process.env.INTERNAL_API_SECRET,
+      },
+    },
   );
-  return payment;
 }
 
 export async function getPaymentById(paymentId) {

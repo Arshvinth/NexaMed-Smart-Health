@@ -39,7 +39,13 @@ export async function createAppointment({
   return appointment;
 }
 
-export async function confirmAppointment(appointmentId, paymentId, amount, user) {
+export async function confirmAppointment(
+  appointmentId,
+  paymentId,
+  amount,
+  user,
+  token,
+) {
   const appointment = await Appointment.findById(appointmentId);
   if (!appointment) {
     const err = new Error("Appointment not found");
@@ -55,16 +61,12 @@ export async function confirmAppointment(appointmentId, paymentId, amount, user)
   const telemedicineUrl =
     process.env.TELEMEDICINE_SERVICE_URL || "http://telemedicine-service:5005";
   const headers = {};
-  if (user) {
-    if (user.userId) headers["x-user-id"] = user.userId;
-    if (user.role) headers["x-role"] = user.role;
+  if (token) {
+    headers.Authorization = token; // forward JWT
   }
-
   const sessionRes = await axios.post(
     `${telemedicineUrl}/api/sessions`,
-    {
-      appointmentId: appointment._id,
-    },
+    { appointmentId: appointment._id },
     { headers },
   );
   const meetingLink = sessionRes.data.data.meetingLink;
