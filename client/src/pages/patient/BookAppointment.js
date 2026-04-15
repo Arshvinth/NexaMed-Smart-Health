@@ -3,7 +3,7 @@ import DoctorSelection from "./DoctorSelection";
 import DoctorAvailability from "./DoctorAvailability";
 import TimeSlots from "./TimeSlots";
 import AppointmentDetails from "./AppointmentDetails";
-import PaymentPage from "./PaymentPage";
+import PaymentPage from "./Payments";
 
 export default function BookAppointment() {
   const [step, setStep] = useState(1);
