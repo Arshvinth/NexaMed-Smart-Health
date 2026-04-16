@@ -10,7 +10,8 @@ function getAuthHeaders() {
     "authorization": `Bearer ${token}`,
     "x-user-id": storedUserId ,
     "x-role": storedRole,
-    "x-verification-status": storedVerification
+    "x-verification-status": storedVerification,
+    "Content-Type": "application/json"
   };
 }
 
