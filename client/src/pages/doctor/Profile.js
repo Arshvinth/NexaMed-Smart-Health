@@ -4,6 +4,7 @@ import { getAuthHeaders } from "../../utils/userAuth";
 const API_GATEWAY_BASE_URL =
   process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
 
+// Initial form shape used for the profile editor
 const INITIAL_FORM = {
   fullName: "",
   phone: "",
@@ -14,6 +15,7 @@ const INITIAL_FORM = {
   bio: "",
 };
 
+// map API profile object to local form representationrefix)
 function mapProfileToForm(profile) {
   if (!profile) return INITIAL_FORM;
 
@@ -32,6 +34,7 @@ function mapProfileToForm(profile) {
   };
 }
 
+// Helper: build API payload from form values (adds Dr. prefix to name)
 function buildPayload(form) {
   const trimmedName = form.fullName.trim();
   const fullNameWithPrefix = trimmedName ? `Dr. ${trimmedName}` : "";
@@ -46,6 +49,7 @@ function buildPayload(form) {
   };
 }
 
+// Helper: read error message from fetch response safely
 async function readError(response) {
   try {
     const body = await response.json();
@@ -54,6 +58,7 @@ async function readError(response) {
     return "Request failed";
   }
 }
+
 
 export default function Profile() {
   const [form, setForm] = useState(INITIAL_FORM);
@@ -66,6 +71,7 @@ export default function Profile() {
   const [editMode, setEditMode] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
 
+  // Load profile from API, supports background refresh mode
   const loadProfile = useCallback(async ({ background = false } = {}) => {
     if (background) {
       setReloading(true);
@@ -103,10 +109,12 @@ export default function Profile() {
     }
   }, []);
 
+  // Initial load on component mount
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
 
+  // Compute form validity used to enable Save button
   const isValid = useMemo(() => {
     const phone = form.phone.trim();
     const phonePattern = /^\+94\d{9}$/;
@@ -122,6 +130,7 @@ export default function Profile() {
     );
   }, [form]);
 
+  // Handle form field changes and inline validation for phone
   function onChange(event) {
     const { name, value } = event.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -138,6 +147,7 @@ export default function Profile() {
      }
   }
 
+  // Submit handler: validate and send profile update to API
   async function onSubmit(event) {
     event.preventDefault();
     setSuccess("");
@@ -179,6 +189,7 @@ export default function Profile() {
     }
   }
 
+  // Render profile editor form and status badges
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6">
       <div className="flex items-start justify-between gap-3 flex-wrap">
