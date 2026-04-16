@@ -8,6 +8,7 @@ function authHeader() {
   return { Authorization: `Bearer ${token}` };
 }
 
+// Admin API for getting pending doctor verifications
 export async function getPendingDoctors() {
   const res = await axios.get(`${API_BASE_URL}/api/admin/doctors/pending`, {
     headers: authHeader(),
@@ -15,6 +16,7 @@ export async function getPendingDoctors() {
   return res.data;
 }
 
+// Admin API for updating doctor verification status
 export async function updateDoctorStatus(userId, status) {
   const res = await axios.patch(
     `${API_BASE_URL}/api/admin/doctors/${userId}/verification-status`,
@@ -24,6 +26,7 @@ export async function updateDoctorStatus(userId, status) {
   return res.data;
 }
 
+// Admin API for listing users with filters
 export async function getUsers({ page = 1, limit = 10, q = "", role = "" } = {}) {
   const res = await axios.get(`${API_BASE_URL}/api/admin/users`, {
     headers: authHeader(),
@@ -32,6 +35,7 @@ export async function getUsers({ page = 1, limit = 10, q = "", role = "" } = {})
   return res.data; // { items, page, limit, total, totalPages }
 }
 
+// Admin API for creating users
 export async function createUser(payload) {
   const res = await axios.post(`${API_BASE_URL}/api/admin/users`, payload, {
     headers: authHeader(),
@@ -39,6 +43,7 @@ export async function createUser(payload) {
   return res.data;
 }
 
+// Admin API for updating users
 export async function updateUser(userId, payload) {
   const res = await axios.patch(`${API_BASE_URL}/api/admin/users/${userId}`, payload, {
     headers: authHeader(),
@@ -46,9 +51,26 @@ export async function updateUser(userId, payload) {
   return res.data;
 }
 
+// Admin API for deleting users
 export async function deleteUser(userId) {
   const res = await axios.delete(`${API_BASE_URL}/api/admin/users/${userId}`, {
     headers: authHeader(),
   });
   return res.data;
+}
+
+// Admin API for listing payments with filters
+export async function getPayments({
+  page = 1,
+  limit = 10,
+  q = "",
+  status = "",
+  fromDate = "",
+  toDate = "",
+} = {}) {
+  const res = await axios.get(`${API_BASE_URL}/api/payments/admin`, {
+    headers: authHeader(),
+    params: { page, limit, q, status, fromDate, toDate },
+  });
+  return res.data; // {items,page,limit,total,totalPages}
 }
