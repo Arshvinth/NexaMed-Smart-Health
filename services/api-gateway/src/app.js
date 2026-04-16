@@ -14,6 +14,8 @@ const telemedicineServiceUrl = process.env.TELEMEDICINE_SERVICE_URL || "http://l
 
 const paymentServiceUrl =
   process.env.PAYMENT_SERVICE_URL || "http://localhost:5004";
+const patientServiceUrl =
+  process.env.PATIENT_SERVICE_URL || "http://localhost:8080";
 const corsOrigin = process.env.CORS_ORIGIN || "http://localhost:3000";
 
 app.use(
@@ -95,6 +97,16 @@ app.use(
 app.use(
   buildProxy(telemedicineServiceUrl, (path) => {
     return path.startsWith("/api/sessions");
+  }),
+);
+
+// Patient service routes
+app.use(
+  buildProxy(patientServiceUrl, (path) => {
+    return (
+      path.startsWith("/api/patients") ||
+      path.startsWith("/api/medical-reports")
+    );
   }),
 );
 
