@@ -35,6 +35,12 @@ export const viewMedicalReportByDoctor = async (doctorId) => {
     return await MedicalReport.find({ doctorId }).sort({ uploadedAt: -1 })
 }
 
+//delete medical reports
+export const deletemedicalReport = async (reportId) => {
+    return await MedicalReport.findByIdAndDelete(reportId);
+}
+
+
 //update medical Reports
 export const updateMedicalReport = async (reportId, files, body) => {
 

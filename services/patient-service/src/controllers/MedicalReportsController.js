@@ -59,3 +59,21 @@ export const updateMedicalReports = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 }
+
+export const deleteMedicalReport = async (req, res) => {
+    try {
+        const { reportId } = req.params;
+
+        const deletedReport = await deleteMedicalReport(reportId);
+
+        res.status(200).json({
+            message: "Medical report deleted successfully",
+            data: deletedReport
+        });
+        logger.info(`Medical report with ID ${reportId} deleted successfully`);
+
+    } catch (error) {
+        logger.error(`Error deleting medical report: ${error.message}`);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};

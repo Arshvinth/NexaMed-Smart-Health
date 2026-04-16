@@ -1,6 +1,6 @@
 import express from 'express';
 import { uploadMedicalReports } from '../middleware/upload.js';
-import { uploadMedicalReport, getMedicalReports, viewMedicalReportByDoctor } from '../controllers/MedicalReportsController.js';
+import { uploadMedicalReport, getMedicalReports, viewMedicalReportByDoctor, deleteMedicalReport } from '../controllers/MedicalReportsController.js';
 import { updateMedicalReport } from '../services/MedicalReportsService.js';
 import { auth } from '../middleware/auth.js';
 
@@ -17,5 +17,8 @@ router.get("/reports/doctor", auth, viewMedicalReportByDoctor);
 
 //Update medical report
 router.put('/update/:reportId', auth, uploadMedicalReports.single('file'), updateMedicalReport);
+
+//delete medical report
+router.delete('/delete/:reportId', auth, deleteMedicalReport);
 
 export default router;
