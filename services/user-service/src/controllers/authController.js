@@ -3,7 +3,8 @@ import {
   registerDoctor,
   login,
   getUserById,
-  getCurrentUser
+  getCurrentUser,
+  logoutToken
 } from "../services/authService.js";
 
 function sanitizeUser(user) {
@@ -73,6 +74,22 @@ export async function getCurrentUserHandler(req, res, next) {
   try {
     const user = await getCurrentUser(req.user.userId);
     res.json(sanitizeUser(user));
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function logoutHandler(req, res, next) {
+  try {
+    const authHeader = req.headers.authorization || "";
+    const token = authHeader.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : null;
+
+    if (!token) return res.status(400).json({ message: "Token required" });
+
+    await logoutToken(token);
+    res.json({ message: "Logged out successfully" });
   } catch (e) {
     next(e);
   }

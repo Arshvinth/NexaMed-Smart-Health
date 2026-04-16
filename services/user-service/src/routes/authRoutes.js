@@ -6,7 +6,8 @@ import {
   registerDoctorHandler,
   loginHandler,
   getUserByIdHandler,
-  getCurrentUserHandler
+  getCurrentUserHandler,
+  logoutHandler
 } from "../controllers/authController.js";
 
 const router = Router();
@@ -14,6 +15,7 @@ const router = Router();
 router.post("/register/patient", registerPatientHandler);
 router.post("/register/doctor", registerDoctorHandler);
 router.post("/login", loginHandler);
+router.post("/logout", auth, logoutHandler);
 router.get("/me", auth, getCurrentUserHandler);
 
 // ADMIN only

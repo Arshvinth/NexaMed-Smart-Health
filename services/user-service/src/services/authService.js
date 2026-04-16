@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import RevokedToken from "../models/RevokedToken.js";
 
 const SALT_ROUNDS = 10;
 
@@ -101,4 +102,16 @@ export async function getCurrentUser(userId) {
 
 export function verifyToken(token) {
   return jwt.verify(token, process.env.JWT_SECRET);
+}
+
+export async function logoutToken(token) {
+  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  const expiresAt = new Date(decoded.exp * 1000);
+  await RevokedToken.create({ token, expiresAt });
+  return { message: "Logged out successfully" };
+}
+
+export async function isTokenRevoked(token) {
+  const found = await RevokedToken.findOne({ token });
+  return !!found;
 }
