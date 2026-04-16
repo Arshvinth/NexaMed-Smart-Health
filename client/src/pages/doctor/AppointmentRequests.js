@@ -81,7 +81,7 @@ async function listDoctorAppointments() {
 }
 
 async function cancelAppointment(appointmentId, reason) {
-  // Send cancellation PATCH for an appointment
+  // Send cancellation PATCH for an appointment with a reason
   const response = await fetch(
     `${API_GATEWAY_BASE_URL}/api/appointments/${appointmentId}/cancel`,
     {
