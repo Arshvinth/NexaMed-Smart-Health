@@ -74,3 +74,12 @@ export async function getPayments({
   });
   return res.data; // {items,page,limit,total,totalPages}
 }
+
+// Admin API for getting platform overview metrics
+export async function getPlatformOverview(range = "24h") {
+  const res = await axios.get(`${API_BASE_URL}/api/admin/overview`, {
+    headers: authHeader(),
+    params: { range }, // today | 24h | week
+  });
+  return res.data;
+}
