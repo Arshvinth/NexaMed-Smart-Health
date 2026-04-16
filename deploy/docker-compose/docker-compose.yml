@@ -18,7 +18,8 @@ services:
     environment:
       PORT: "5001"
       NODE_ENV: "production"
-      MONGODB_URI: "${MONGODB_URI:-mongodb://mongo:27017/user_service}"
+      MONGODB_URI: "${MONGODB_URI}"
+      #MONGODB_URI: "${MONGODB_URI:-mongodb://mongo:27017/user_service}"
       # MONGODB_URI: "mongodb://mongo:27017/nexamed_users"
       JWT_SECRET: "${JWT_SECRET}"
       JWT_EXPIRES_IN: "7d"
@@ -40,7 +41,8 @@ services:
       NODE_ENV: "production"
       AUTH_MODE: "jwt"
       JWT_SECRET: "${JWT_SECRET}"
-      MONGODB_URI: "${MONGODB_URI:-mongodb://mongo:27017/doctor_service}"
+      MONGODB_URI: "${MONGODB_URI}"
+      # MONGODB_URI: "${MONGODB_URI:-mongodb://mongo:27017/doctor_service}"
       # MONGODB_URI: "mongodb://mongo:27017/doctor_service"
       CORS_ORIGIN: "http://localhost:3000"
     depends_on:
@@ -57,7 +59,8 @@ services:
       NODE_ENV: "production"
       AUTH_MODE: "jwt"
       JWT_SECRET: "${JWT_SECRET}"
-      MONGODB_URI: "${APPOINTMENT_MONGODB_URI:-mongodb://mongo:27017/appointment_service}"
+      MONGODB_URI: "${MONGODB_URI}"
+      # MONGODB_URI: "${APPOINTMENT_MONGODB_URI:-mongodb://mongo:27017/appointment_service}"
       CORS_ORIGIN: "http://localhost:3000"
       DOCTOR_SERVICE_URL: "http://doctor-service:5002"
       TELEMEDICINE_SERVICE_URL: "http://telemedicine-service:5005"
@@ -86,7 +89,8 @@ services:
     environment:
       PORT: "5004"
       NODE_ENV: "production"
-      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/payment_service}
+      MONGODB_URI: "${MONGODB_URI}"
+      # MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/payment_service}
       CORS_ORIGIN: "http://localhost:3000"
       APPOINTMENT_SERVICE_URL: "http://appointment-service:5003"
       JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_here}
@@ -119,73 +123,6 @@ services:
       - appointment-service
       - telemedicine-service
       - payment-service
-
-  # mongo:
-  #   image: mongo:7
-  #   container_name: shp-mongo
-  #   restart: unless-stopped
-  #   ports:
-  #     - "27017:27017"
-  #   volumes:
-  #     - mongo_data:/data/db
-
-  # doctor-service:
-  #   build:
-  #     context: ../../services/doctor-service
-  #   container_name: shp-doctor-service
-  #   restart: unless-stopped
-  #   environment:
-  #     PORT: "5002"
-  #     NODE_ENV: "production"
-  #     AUTH_MODE: "dev"
-  #     MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/doctor_service}
-  #     CORS_ORIGIN: "http://localhost:3000"
-  #   depends_on:
-  #     - mongo
-
-  # appointment-service:
-  #   build:
-  #     context: ../../services/appointment-service
-  #   container_name: shp-appointment-service
-  #   restart: unless-stopped
-  #   environment:
-  #     PORT: "5003"
-  #     NODE_ENV: "production"
-  #     AUTH_MODE: "dev"
-  #     MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/appointment_service}
-  #     CORS_ORIGIN: "http://localhost:3000"
-  #     DOCTOR_SERVICE_URL: "http://doctor-service:5002"
-  #     TELEMEDICINE_SERVICE_URL: "http://telemedicine-service:5005"
-  #   depends_on:
-  #     - mongo
-  #     - doctor-service
-  #     - telemedicine-service
-  
-  # patient-service:
-  #   build:
-  #     context: ../../services/patient-service
-  #   container_name: shp-patient-service
-  #   restart: unless-stopped
-  #   ports:
-  #     - "8080:8080"
-  #   environment:
-  #     PORT: "8080"
-  #     NODE_ENV: "production"
-  #     MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/patient_service}
-  #     CORS_ORIGIN: "http://localhost:3000"
-  #   depends_on:
-  #     - mongo
-
-  # telemedicine-service:
-  #   build:
-  #     context: ../../services/telemedicine-service
-  #   container_name: shp-telemedicine-service
-  #   restart: unless-stopped
-  #   environment:
-  #     PORT: "5005"
-  #     NODE_ENV: "production"
-  #     AUTH_MODE: "dev"
-  #     CORS_ORIGIN: "http://localhost:3000"
 
 volumes:
   mongo_data:
