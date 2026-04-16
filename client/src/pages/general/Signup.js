@@ -32,10 +32,24 @@ export default function Signup() {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      // simple role-based redirect
-      if (data.user.role === "PATIENT") navigate("/patient");
+      // If the signed-up user is a patient, create a patient profile via API gateway
+      if (data.user.role === "PATIENT") {
+        try {
+          const resp = await fetch(`${API_GATEWAY_BASE_URL}/api/patients/addPatient`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: data.user.id,
+              birthDay: "NULL"
+            }),
+          });
+          console.log("Patient profile creation response:", resp);
+          navigate("/patient");
+        } catch (e) {
+          console.error("Failed to create patient profile:", e);
+        }
+      }
       else if (data.user.role === "DOCTOR") {
-        // navigate("/doctor");
         // Call doctor-service to create doctor profile
         console.log(`API Gateway Base URL: ${API_GATEWAY_BASE_URL}`);
         console.log("Signup response data:", data.user);
