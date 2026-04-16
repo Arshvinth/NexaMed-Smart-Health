@@ -30,6 +30,7 @@ export default function ConsultationRoom() {
   const [session, setSession] = useState(null);
   const [appointments, setAppointments] = useState([]);
   const [appointmentsLoading, setAppointmentsLoading] = useState(false);
+  const [userProfiles, setUserProfiles] = useState({});
 
   useEffect(() => {
     let active = true;
@@ -102,6 +103,37 @@ export default function ConsultationRoom() {
     };
   }, [sessionId]);
 
+  // Fetch missing user profiles for the appointments dropdown so we can show names
+  useEffect(() => {
+    const ids = Array.from(new Set(appointments.map((a) => a.patientUserId).filter(Boolean)));
+    const missing = ids.filter((id) => !userProfiles[id]);
+    if (missing.length === 0) return;
+
+    Promise.all(
+      missing.map((id) =>
+        fetch(`${API_GATEWAY_BASE_URL}/api/auth/users/${id}`, { method: "GET", headers: getAuthHeaders() })
+          .then((r) => r.text())
+          .then((text) => {
+            try {
+              const data = JSON.parse(text);
+              return { id, profile: data?.data ?? data ?? null };
+            } catch (_e) {
+              return { id, profile: null };
+            }
+          })
+          .catch(() => ({ id, profile: null })),
+      ),
+    ).then((results) => {
+      setUserProfiles((prev) => {
+        const updated = { ...prev };
+        results.forEach(({ id, profile }) => {
+          updated[id] = profile;
+        });
+        return updated;
+      });
+    });
+  }, [appointments, userProfiles]);
+
   const meetingLink = session?.meetingLink || "";
 
   return (
@@ -142,11 +174,12 @@ export default function ConsultationRoom() {
                   appt.patientName ||
                   appt.patientFullName ||
                   appt.patient_user_name ||
+                  userProfiles[appt.patientUserId]?.fullName ||
                   appt.patientUserId;
 
                 const queueLabel =
                   typeof appt.queueNumber === "number" || appt.queueNumber
-                    ? `#${appt.queueNumber}`
+                    ? `${appt.queueNumber}`
                     : "No queue";
 
                 const dateTimeLabel = appt.startTime
@@ -155,7 +188,7 @@ export default function ConsultationRoom() {
 
                 return (
                   <option key={appt._id} value={appt._id}>
-                    {`${queueLabel} | ${dateTimeLabel} | Patient: ${displayPatientName}`}
+                    {`Queue No: ${queueLabel}  — ${displayPatientName} — Date & Time ${dateTimeLabel} `}
                   </option>
                 );
               })}
