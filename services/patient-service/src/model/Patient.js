@@ -7,7 +7,7 @@ const PatientSchema = new mongoose.Schema({
     },
     birthDay: {
         type: Date,
-        required: true
+        required: false
     },
     gender: {
         type: String,

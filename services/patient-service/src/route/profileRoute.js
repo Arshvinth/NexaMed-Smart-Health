@@ -1,9 +1,12 @@
 import express from 'express';
-import { deletePatientProfile, getAllPatients, getPatientprofile, updatePatientProfile } from '../controllers/profileController.js';
+import { deletePatientProfile, getAllPatients, getPatientprofile, updatePatientProfile, addPatient } from '../controllers/profileController.js';
 import { auth } from '../middleware/auth.js';
 import { requireRole } from '../middleware/requireRole.js';
 
 const router = express.Router();
+
+// Public: create a patient profile (no auth)
+router.post('/addPatient', addPatient);
 
 // Get patient profile
 router.get('/profile/:patientid', auth, requireRole("PATIENT"), getPatientprofile);

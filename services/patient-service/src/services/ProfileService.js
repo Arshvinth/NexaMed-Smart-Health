@@ -67,3 +67,22 @@ export const getAllProfiles = async () => {
     const patients = await Patient.find();
     return patients;
 }
+
+// Create a new patient profile
+export const createPatient = async (payload) => {
+    if (!payload || !payload.userId) {
+        logger.error('Payload with userId is required to create patient');
+        throw new Error('userId is required');
+    }
+
+    // Sanitize birthDay placeholder values (client may send the string "NULL")
+    if (payload.birthDay && typeof payload.birthDay === "string") {
+        const v = payload.birthDay.trim();
+        if (v === "" || v.toUpperCase() === "NULL") {
+            delete payload.birthDay;
+        }
+    }
+
+    const newPatient = await Patient.create(payload);
+    return newPatient;
+}

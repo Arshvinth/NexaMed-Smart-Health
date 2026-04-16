@@ -1,5 +1,5 @@
 
-import { deletePatientProfiles, getAllProfiles, getPatientProfiles, updatePatientProfiles } from "../services/ProfileService.js";
+import { deletePatientProfiles, getAllProfiles, getPatientProfiles, updatePatientProfiles, createPatient } from "../services/ProfileService.js";
 import logger from "../utils/Logger.js";
 
 
@@ -51,5 +51,16 @@ export const getAllPatients = async (req, res) => {
     } catch (error) {
         logger.error(`Error fetching all patient profiles: ${error.message}`);
         res.status(500).json({ message: "Internal Server Error" });
+    }
+}
+
+export const addPatient = async (req, res) => {
+    try {
+        const payload = req.body || {};
+        const patient = await createPatient(payload);
+        res.status(201).json({ data: patient });
+    } catch (error) {
+        logger.error(`Error creating patient profile: ${error.message}`);
+        res.status(500).json({ message: "Failed to create patient profile", error: error.message });
     }
 }
