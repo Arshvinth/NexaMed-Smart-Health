@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { getAuthHeaders } from "../../utils/userAuth";
 
 const API_GATEWAY_BASE_URL =
@@ -57,7 +57,7 @@ async function updatePrescription(id, payload) {
     `${API_GATEWAY_BASE_URL}/api/prescriptions/${id}`,
     {
       method: "PUT",
-      headers: getAuthHeaders(),
+      headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     },
   );
@@ -96,6 +96,23 @@ async function parseErrorResponse(response) {
   return `${response.status}: ${message}`;
 }
 
+// Fetch a user profile from user-service (returns top-level user or wrapped `data`)
+async function fetchUserProfile(userId) {
+  const url = `${API_GATEWAY_BASE_URL}/api/auth/users/${userId}`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    data = text;
+  }
+  return data?.data ?? data ?? {};
+}
+
 async function listDoctorAppointments() {
   const response = await fetch(`${API_GATEWAY_BASE_URL}/api/appointments/me`, {
     method: "GET",
@@ -123,6 +140,8 @@ export default function DoctorPrescriptions() {
   const [formItemErrors, setFormItemErrors] = useState([]);
 
   const [appointments, setAppointments] = useState([]);
+  const [userProfiles, setUserProfiles] = useState({});
+  const [search, setSearch] = useState("");
 
   async function load() {
     setLoading(true);
@@ -167,6 +186,29 @@ export default function DoctorPrescriptions() {
       active = false;
     };
   }, []);
+
+  // Fetch missing user profiles for prescriptions so we can show full names
+  useEffect(() => {
+    const ids = Array.from(new Set(prescriptions.map((p) => p.patientUserId).filter(Boolean)));
+    const missing = ids.filter((id) => !userProfiles[id]);
+    if (missing.length === 0) return;
+
+    Promise.all(
+      missing.map((id) =>
+        fetchUserProfile(id)
+          .then((profile) => ({ id, profile }))
+          .catch(() => ({ id, profile: null })),
+      ),
+    ).then((results) => {
+      setUserProfiles((prev) => {
+        const updated = { ...prev };
+        results.forEach(({ id, profile }) => {
+          updated[id] = profile;
+        });
+        return updated;
+      });
+    });
+  }, [prescriptions, userProfiles]);
 
   function openEdit(p) {
     setEditingPrescription(p);
@@ -350,6 +392,24 @@ export default function DoctorPrescriptions() {
     return map;
   }, [appointments]);
 
+  const filteredPrescriptions = useMemo(() => {
+    const q = (search || "").trim().toLowerCase();
+    if (!q) return prescriptions;
+
+    return prescriptions.filter((p) => {
+      const displayPatientName =
+        (p.patientName || p.patientFullName || p.patient_user_name || userProfiles[p.patientUserId]?.fullName || "").toLowerCase();
+
+      if (displayPatientName.includes(q)) return true;
+
+      const appointment = appointmentDetails[p.appointmentId];
+      const queueLabel = appointment?.queueNumber != null ? String(appointment.queueNumber) : "";
+      if (queueLabel.includes(q)) return true;
+
+      return false;
+    });
+  }, [prescriptions, userProfiles, appointmentDetails, search]);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -360,6 +420,25 @@ export default function DoctorPrescriptions() {
           <p className="text-sm text-slate-500">
             Review, update, or remove prescriptions you have issued.
           </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="search"
+            aria-label="Search prescriptions"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by patient name or queue number"
+            className="w-72 rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm"
+          />
+          {search ? (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="text-sm text-slate-500 hover:text-slate-700"
+            >
+              Clear
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -386,15 +465,16 @@ export default function DoctorPrescriptions() {
             </p>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="space-y-6">
             {/* Map through prescriptions returned from doctor-service */}
-            {prescriptions.map((p) => {
+              {filteredPrescriptions.map((p) => {
               // Derive a readable patient label; fall back to patientUserId
-              const displayPatientName =
-                p.patientName ||
-                p.patientFullName ||
-                p.patient_user_name ||
-                p.patientUserId;
+                const displayPatientName =
+                  p.patientName ||
+                  p.patientFullName ||
+                  p.patient_user_name ||
+                  userProfiles[p.patientUserId]?.fullName ||
+                  p.patientUserId;
 
               // Get appointment details if available
               const appointment = appointmentDetails[p.appointmentId];
@@ -411,7 +491,7 @@ export default function DoctorPrescriptions() {
               return (
                 <div
                   key={p._id}
-                  className="relative rounded-2xl border border-slate-200 bg-white p-6 space-y-4 shadow-md hover:shadow-xl transition-shadow duration-200 group"
+                  className="w-full relative rounded-2xl border border-slate-200 bg-white p-6 space-y-4 shadow-md hover:shadow-xl transition-shadow duration-200 group"
                 >
                   {/* Patient and appointment info */}
                   <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-700">
@@ -520,7 +600,7 @@ export default function DoctorPrescriptions() {
 
             {editingPrescription ? (
               <p className="text-xs text-slate-500">
-                Patient: <span className="font-semibold">{editingPrescription.patientUserId}</span>{" "}
+                Patient: <span className="font-semibold">{userProfiles[editingPrescription.patientUserId]?.fullName || editingPrescription.patientUserId}</span>{" "}
                 | Appointment: <span className="font-semibold">{editingPrescription.appointmentId}</span>
               </p>
             ) : null}
