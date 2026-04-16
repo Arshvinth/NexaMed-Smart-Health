@@ -17,6 +17,6 @@ router.post("/login", loginHandler);
 router.get("/me", auth, getCurrentUserHandler);
 
 // ADMIN only
-router.get("/users/:userId", auth, requireRole("ADMIN"), getUserByIdHandler);
+router.get("/users/:userId", auth, requireRole("DOCTOR", "ADMIN"), getUserByIdHandler);
 
 export default router;
