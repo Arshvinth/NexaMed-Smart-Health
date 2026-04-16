@@ -3,6 +3,7 @@ import {
   createPaymentIntent,
   confirmPayment,
   getPaymentById,
+  listPayments,
 } from "../services/paymentService.js";
 
 // POST /api/payments/create-intent
@@ -55,4 +56,20 @@ export async function getPayment(req, res) {
     return res.status(403).json({ message: "Forbidden" });
   }
   res.json(payment);
+}
+
+// GET /api/payments (admin only)
+export async function getPaymentsAdmin(req, res) {
+  const { page = 1, limit = 10, q = "", status = "", fromDate = "", toDate = "" } = req.query;
+
+  const result = await listPayments({
+    page: Number(page),
+    limit: Number(limit),
+    q,
+    status,
+    fromDate,
+    toDate,
+  });
+
+  res.json(result);
 }

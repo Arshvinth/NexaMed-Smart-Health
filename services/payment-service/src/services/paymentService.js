@@ -87,3 +87,45 @@ export async function confirmPayment(paymentIntentId) {
 export async function getPaymentById(paymentId) {
   return Payment.findById(paymentId);
 }
+
+export async function listPayments({
+  page = 1,
+  limit = 10,
+  q = "",
+  status = "",
+  fromDate = "",
+  toDate = "",
+}) {
+  const skip = (page - 1) * limit;
+  const filter = {};
+
+  if (status) filter.status = status;
+
+  if (q) {
+    filter.$or = [
+      { appointmentId: { $regex: q, $options: "i" } },
+      { patientUserId: { $regex: q, $options: "i" } },
+      { transactionId: { $regex: q, $options: "i" } },
+      { stripePaymentIntentId: { $regex: q, $options: "i" } },
+    ];
+  }
+
+  if (fromDate || toDate) {
+    filter.createdAt = {};
+    if (fromDate) filter.createdAt.$gte = new Date(fromDate);
+    if (toDate) filter.createdAt.$lte = new Date(toDate);
+  }
+
+  const [items, total] = await Promise.all([
+    Payment.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Payment.countDocuments(filter),
+  ]);
+
+  return {
+    items,
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit) || 1,
+  };
+}
