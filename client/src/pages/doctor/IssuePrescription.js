@@ -60,7 +60,7 @@ async function createPrescription(payload) {
   console.log("Creating prescription with payload:", payload);
   const response = await fetch(`${API_GATEWAY_BASE_URL}/api/prescriptions/`, {
     method: "POST",
-    headers: getAuthHeaders(),
+    headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 
