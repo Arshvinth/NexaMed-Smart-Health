@@ -29,10 +29,12 @@ export default function Profile() {
 
   const fetchProfile = async () => {
     try {
-      const userId = localStorage.getItem('x-user-id') || 'P0001';
+      const userId = localStorage.getItem('x-user-id') || 'TEST001';
       const response = await fetch(`${API_GATEWAY_BASE_URL}/api/patients/profile/${userId}`, {
         headers: getAuthHeaders()
       });
+
+      console.log(response);
 
       if (!response.ok) throw new Error('Failed to fetch profile');
 

@@ -8,7 +8,7 @@ function getAuthHeaders() {
     const storedRole = localStorage.getItem("x-role");
 
     return {
-        "x-user-id": storedUserId || "P0001",
+        "x-user-id": storedUserId || "69d24e28cc9a37224f7e0147",
         "x-role": storedRole || "PATIENT",
         "x-verification-status": "VERIFIED",
     };
@@ -29,7 +29,7 @@ export default function MyReports() {
     const fetchReports = async () => {
         try {
             setLoading(true);
-            const patientId = localStorage.getItem('x-user-id') || '69d24e28cc9a37224f7e0147';
+            const patientId = localStorage.getItem('x-user-id') || 'TEST001';
 
             const response = await fetch(`${API_GATEWAY_BASE_URL}/api/medical-reports/${patientId}`, {
                 headers: getAuthHeaders()

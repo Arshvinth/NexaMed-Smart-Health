@@ -18,8 +18,21 @@ export default function UploadReports() {
     doctorId: ""
   });
 
+  // Helper function to get auth headers for dev mode
+  const getAuthHeaders = () => {
+    const userId = localStorage.getItem('x-user-id') || 'TEST001';
+    const role = localStorage.getItem('x-role') || 'PATIENT';
+    const verificationStatus = localStorage.getItem('x-verification-status') || 'VERIFIED';
+
+    return {
+      'x-user-id': userId,
+      'x-role': role,
+      'x-verification-status': verificationStatus,
+      'Content-Type': 'multipart/form-data'
+    };
+  };
+
   const onDrop = useCallback((acceptedFiles, rejectedFiles) => {
-    // Handle rejected files
     if (rejectedFiles && rejectedFiles.length > 0) {
       const errors = rejectedFiles.map(reject =>
         `${reject.file.name}: ${reject.errors[0].message}`
@@ -28,7 +41,6 @@ export default function UploadReports() {
       return;
     }
 
-    // Filter valid files (max 10 files, max 10MB each)
     const validFiles = acceptedFiles.filter(file => {
       const isValidSize = file.size <= 10 * 1024 * 1024;
       const isValidType = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'].includes(file.type);
@@ -94,6 +106,11 @@ export default function UploadReports() {
     setError(null);
     setSuccess(null);
 
+    // Simulate progress
+    const progressInterval = setInterval(() => {
+      setUploadProgress(prev => Math.min(prev + 10, 90));
+    }, 500);
+
     try {
       const formDataToSend = new FormData();
 
@@ -109,50 +126,54 @@ export default function UploadReports() {
       formDataToSend.append('diagnosis', formData.diagnosis);
       formDataToSend.append('doctorId', formData.doctorId);
 
-      // Get patientId from localStorage or context
-      const patientId = localStorage.getItem('patientId') || 'demo-patient-id';
+      // Use the correct patient ID (MongoDB ObjectId)
+      const patientId = localStorage.getItem('x-user-id') || 'TEST001';
       formDataToSend.append('patientId', patientId);
 
-      // Get auth token
-      const token = localStorage.getItem('token');
+      console.log('Uploading with patientId:', patientId);
+      console.log('Files:', files.length);
+      console.log('Form data:', {
+        title: formData.title,
+        reportType: formData.reportType,
+        doctorId: formData.doctorId,
+        patientId: patientId
+      });
 
-      // Try both gateway and direct service
-      const apiUrls = [
-        `http://localhost:5000/api/medical-reports/upload`,
-        `http://localhost:8081/api/medical-reports/upload`
-      ];
+      // Use API Gateway
+      const apiGatewayUrl = `http://localhost:5000/api/medical-reports/upload`;
 
-      let response = null;
-      let lastError = null;
+      // Don't set Content-Type header - let browser set it with boundary
+      const response = await fetch(apiGatewayUrl, {
+        method: 'POST',
+        headers: {
+          'x-user-id': patientId,
+          'x-role': 'PATIENT',
+          'x-verification-status': 'VERIFIED'
+        },
+        body: formDataToSend
+      });
 
-      for (const url of apiUrls) {
-        try {
-          console.log(`Uploading to: ${url}`);
-          response = await fetch(url, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`
-            },
-            body: formDataToSend
-          });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Upload failed:', response.status, errorText);
 
-          if (response.ok) {
-            break;
-          }
-        } catch (err) {
-          lastError = err;
-          continue;
+        if (response.status === 401) {
+          throw new Error('Authentication failed. Please check your patient ID.');
         }
-      }
-
-      if (!response || !response.ok) {
-        throw new Error(lastError?.message || 'Upload failed');
+        if (response.status === 400) {
+          throw new Error(`Bad request: ${errorText}`);
+        }
+        if (response.status === 500) {
+          throw new Error(`Server error: ${errorText || 'Internal server error'}`);
+        }
+        throw new Error(`Upload failed with status ${response.status}`);
       }
 
       const result = await response.json();
 
-      setUploadedReports(result.data);
-      setSuccess(`Successfully uploaded ${result.data.length} report(s)`);
+      setUploadProgress(100);
+      setUploadedReports(result.data || []);
+      setSuccess(`Successfully uploaded ${result.data?.length || files.length} report(s)`);
 
       // Reset form after successful upload
       setTimeout(() => {
@@ -165,14 +186,16 @@ export default function UploadReports() {
           doctorId: ""
         });
         setUploadedReports([]);
+        // Trigger refresh in MyReports component
+        window.dispatchEvent(new Event('reportsUpdated'));
       }, 3000);
 
     } catch (err) {
       console.error('Upload error:', err);
       setError(err.message || 'Failed to upload reports. Please try again.');
     } finally {
+      clearInterval(progressInterval);
       setUploading(false);
-      setUploadProgress(100);
       setTimeout(() => setUploadProgress(0), 1000);
     }
   };

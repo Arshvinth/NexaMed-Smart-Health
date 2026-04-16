@@ -53,7 +53,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const patientId = localStorage.getItem('x-user-id') || 'P0001';
+        const patientId = localStorage.getItem('x-user-id') || 'TEST001';
         const API_BASE = process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
 
         // Fetch reports count

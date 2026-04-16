@@ -1,14 +1,41 @@
+import mongoose from 'mongoose';
 import MedicalReport from '../model/MedicalReports.js';
 import { uploadToCloudinary } from '../middleware/upload.js';
+import Patient from '../model/Patient.js';
 
 export const uploadMedicalReports = async (files, body) => {
     const uploadedReports = [];
 
+    console.log('Looking for patient with identifier:', body.patientId);
+
+    const identifier = body.patientId;
+
+    console.log("identifier", identifier);
+
+    const patient = await Patient.findOne({ userId: identifier })
+
+    if (!patient) {
+        console.error('Patient not found. Searched for userId:', identifier);
+
+        // List available patients for debugging
+        const allPatients = await Patient.find({}).select('_id userId');
+        console.log('Available patients in DB:');
+        allPatients.forEach(p => {
+            console.log(`  - _id: ${p._id}, userId: ${p.userId}`);
+        });
+
+        throw new Error(`Patient not found with userId: ${identifier}`);
+    }
+
+    console.log('Found patient:', {
+        _id: patient._id,
+        userId: patient.userId
+    });
+
+
     for (const file of files) {
         // Upload to Cloudinary
         const result = await uploadToCloudinary(file, 'medical-reports');
-
-        let patient = await Patient.findById(body.patientId);
 
         const medicalReport = new MedicalReport({
             patientId: patient._id,
@@ -30,7 +57,17 @@ export const uploadMedicalReports = async (files, body) => {
 };
 
 export const getMedicalReportsByPatient = async (patientId) => {
-    return await MedicalReport.find({ patientId }).sort({ uploadedAt: -1 });
+    // Find patient by userId
+    const patient = await Patient.findOne({ userId: patientId });
+
+    if (!patient) {
+        console.log('Patient not found with userId:', patientId);
+        return [];
+    }
+
+    const reports = await MedicalReport.find({ patientId: patient._id }).sort({ uploadedAt: -1 });
+    console.log(`Found ${reports.length} reports for patient ${patient._id}`);
+    return reports;
 };
 
 export const viewMedicalReportByDoctor = async (doctorId) => {

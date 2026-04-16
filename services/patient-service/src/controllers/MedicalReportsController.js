@@ -1,4 +1,4 @@
-import { uploadMedicalReports, getMedicalReportsByPatient, updateMedicalReport } from '../services/MedicalReportsService.js';
+import { uploadMedicalReports, getMedicalReportsByPatient, updateMedicalReport, deletemedicalReport } from '../services/MedicalReportsService.js';
 import logger from '../utils/Logger.js';
 
 export const uploadMedicalReport = async (req, res) => {
@@ -32,7 +32,7 @@ export const getMedicalReports = async (req, res) => {
 
 export const viewMedicalReportByDoctor = async (req, res) => {
     try {
-        const { doctorId } = req.doctor.Id;
+        const { doctorId } = req.doctor?.Id;
         const reports = await viewMedicalReportByDoctor(doctorId);
         res.status(200).json({ data: reports });
     } catch (error) {
@@ -64,7 +64,7 @@ export const deleteMedicalReport = async (req, res) => {
     try {
         const { reportId } = req.params;
 
-        const deletedReport = await deleteMedicalReport(reportId);
+        const deletedReport = await deletemedicalReport(reportId);
 
         res.status(200).json({
             message: "Medical report deleted successfully",

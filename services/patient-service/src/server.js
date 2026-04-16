@@ -21,6 +21,8 @@ dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 const app = express();
 
+app.set('trust proxy', true);
+
 //set secure for http headers
 app.use(helmet());
 
@@ -37,14 +39,16 @@ app.use(express.urlencoded({
 const limitter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
-    message: "Too many request from this Ip.Please try again later..."
+    message: "Too many request from this Ip.Please try again later...",
+    trustProxy: false,
+    validate: { trustProxy: false }
 });
 
 app.use("/api", limitter);
 
 // Routes
 app.use('/api/medical-reports', medicalReportsRouter);
-app.use('/api/prescriptions', prescriptionsRouter);
+app.use('/api/prescription', prescriptionsRouter);
 app.use('/api/patients', profileRouter);
 app.use('/api/prediction', predictRoute)
 
