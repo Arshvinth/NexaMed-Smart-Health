@@ -126,7 +126,7 @@ export default function AppointmentRequests() {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [userProfiles, setUserProfiles] = useState({});
-  const [activeFilter, setActiveFilter] = useState("pending");
+  const [activeFilter, setActiveFilter] = useState("ALL");
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState("");
   const [error, setError] = useState("");
