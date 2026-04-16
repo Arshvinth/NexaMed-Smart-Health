@@ -6,10 +6,6 @@ import { useParams } from "react-router-dom";
 const API_GATEWAY_BASE_URL =
   process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
 
-// Direct patient-service base URL (not behind gateway yet)
-// const PATIENT_SERVICE_BASE_URL =
-//   process.env.REACT_APP_PATIENT_SERVICE_URL || "http://localhost:8080";
-
 // Load confirmed appointments for the logged-in doctor
 async function fetchDoctorAppointments() {
   const res = await fetch(
@@ -42,9 +38,9 @@ async function fetchAllPatients() {
 }
 
 // Fetch medical reports for a specific patient (by Patient _id)
-async function fetchMedicalReports(patientMongoId) {
+async function fetchMedicalReports(patientId) {
   const res = await fetch(
-    `${API_GATEWAY_BASE_URL}/api/medical-reports/${patientMongoId}`,
+    `${API_GATEWAY_BASE_URL}/api/medical-reports/${patientId}`,
   );
 
   if (!res.ok) {
@@ -53,7 +49,29 @@ async function fetchMedicalReports(patientMongoId) {
   }
 
   const data = await res.json();
+
   return Array.isArray(data?.data) ? data.data : [];
+}
+
+async function fetchUserProfile(userId) {
+  const url = `${API_GATEWAY_BASE_URL}/api/auth/users/${userId}`;
+  const headers = getAuthHeaders();
+  const res = await fetch(url, {
+    method: "GET",
+    headers,
+  });
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    data = text;
+  }
+  if (!res.ok) {
+    throw new Error("Failed to load user profile");
+  }
+  // Prefer `data.data` when present, otherwise return the parsed object.
+  return data?.data ?? data ?? {};
 }
 
 export default function PatientReports() {
@@ -70,6 +88,8 @@ export default function PatientReports() {
   );
   const [reports, setReports] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
+
+  const [userProfiles, setUserProfiles] = useState({});
   const [reportsError, setReportsError] = useState("");
 
   // Load doctor appointments + all patient profiles on first render
@@ -117,7 +137,6 @@ export default function PatientReports() {
     // Attach profile info where available
     return Array.from(userIdSet).map((userId) => {
       const profile = patients.find((p) => p.userId === userId) || null;
-
       // Gather this patient's appointments for quick stats
       const patientAppointments = appointments.filter(
         (a) => a.patientUserId === userId,
@@ -157,7 +176,8 @@ export default function PatientReports() {
       setReportsLoading(true);
       setReportsError("");
       try {
-        const data = await fetchMedicalReports(selectedPatient.profile._id);
+        console.log(`Loading medical reports for patient userId: ${selectedPatient.userId}, patient MongoDB ID: ${selectedPatient.profile.userId}`);
+        const data = await fetchMedicalReports(selectedPatient.profile.userId);
         if (!active) return;
         setReports(data);
       } catch (e) {
@@ -176,6 +196,30 @@ export default function PatientReports() {
   }, [selectedPatient]);
 
   const hasPatients = doctorPatients.length > 0;
+
+  //Get particular userId and retrieve fullname from user table in user-service, then display it in the UI instead of userId.
+  useEffect(() => {
+    const missingUserIds = doctorPatients
+      .map(p => p.userId)
+      .filter(userId => !userProfiles[userId]);
+    if (missingUserIds.length === 0) return;
+
+    Promise.all(
+      missingUserIds.map(userId =>
+        fetchUserProfile(userId)
+          .then(profile => ({ userId, profile }))
+          .catch(() => ({ userId, profile: null }))
+      )
+    ).then(results => {
+      setUserProfiles(prev => {
+        const updated = { ...prev };
+        results.forEach(({ userId, profile }) => {
+          updated[userId] = profile;
+        });
+        return updated;
+      });
+    });
+  }, [doctorPatients, userProfiles]);
 
   return (
     <div className="space-y-4">
@@ -222,16 +266,16 @@ export default function PatientReports() {
                     <button
                       type="button"
                       onClick={() => setSelectedPatientUserId(p.userId)}
-                      className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition-colors ${
-                        isSelected
-                          ? "border-sky-500 bg-sky-50/80 text-slate-900"
-                          : "border-slate-200 bg-slate-50/60 hover:bg-slate-100"
-                      }`}
+                      className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition-colors ${isSelected
+                        ? "border-sky-500 bg-sky-50/80 text-slate-900"
+                        : "border-slate-200 bg-slate-50/60 hover:bg-slate-100"
+                        }`}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div>
                           <div className="font-semibold text-slate-900">
-                            {p.profile?.fullName || p.userId}
+                            {userProfiles[p.userId]?.fullName || p.userId}
+                            {/* {userProfile?.fullName || p.userId} */}
                           </div>
                           <div className="text-xs text-slate-500 mt-0.5">
                             Last appointment: {lastApptTime}
@@ -260,8 +304,7 @@ export default function PatientReports() {
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <h2 className="text-lg font-semibold text-slate-900">
-                    {selectedPatient.profile?.fullName ||
-                      selectedPatient.userId}
+                    {userProfiles[selectedPatient.userId]?.fullName || selectedPatient.userId}
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
                     User ID: {selectedPatient.userId}
@@ -283,8 +326,8 @@ export default function PatientReports() {
                     <span className="font-semibold">Birth date:</span>{" "}
                     {selectedPatient.profile.birthDay
                       ? new Date(
-                          selectedPatient.profile.birthDay,
-                        ).toLocaleDateString()
+                        selectedPatient.profile.birthDay,
+                      ).toLocaleDateString()
                       : "N/A"}
                   </div>
                   <div>
