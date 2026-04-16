@@ -4,7 +4,8 @@ const MedicalReportSchema = new mongoose.Schema({
 
     patientId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Patient"
+        // ref: "Patient"
+        ref: "User"
     },
     file: {
         url: String
