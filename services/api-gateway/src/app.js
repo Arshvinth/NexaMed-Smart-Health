@@ -9,9 +9,12 @@ const app = express();
 
 const gatewayPort = Number(process.env.PORT || 5000);
 const userServiceUrl = process.env.USER_SERVICE_URL || "http://localhost:5001";
-const doctorServiceUrl = process.env.DOCTOR_SERVICE_URL || "http://localhost:5002";
-const appointmentServiceUrl = process.env.APPOINTMENT_SERVICE_URL || "http://localhost:5003";
-const telemedicineServiceUrl = process.env.TELEMEDICINE_SERVICE_URL || "http://localhost:5005";
+const doctorServiceUrl =
+  process.env.DOCTOR_SERVICE_URL || "http://localhost:5002";
+const appointmentServiceUrl =
+  process.env.APPOINTMENT_SERVICE_URL || "http://localhost:5003";
+const telemedicineServiceUrl =
+  process.env.TELEMEDICINE_SERVICE_URL || "http://localhost:5005";
 
 const paymentServiceUrl =
   process.env.PAYMENT_SERVICE_URL || "http://localhost:5004";
@@ -80,7 +83,7 @@ app.use(
   buildProxy(userServiceUrl, (path) => {
     if (path === "/api/admin/overview") return false;
     return path.startsWith("/api/auth") || path.startsWith("/api/admin");
-  })
+  }),
 );
 
 // Doctor service routes

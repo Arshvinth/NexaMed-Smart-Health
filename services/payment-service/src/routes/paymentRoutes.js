@@ -6,6 +6,7 @@ import {
   postCreatePaymentIntent,
   getPayment,
   getPaymentsAdmin,
+  postConfirmAppointment,
 } from "../controllers/paymentController.js";
 
 const router = Router();
@@ -24,6 +25,11 @@ router.get(
   auth,
   requireRole("ADMIN"),
   asyncHandler(getPaymentsAdmin)
+);
+router.post(
+  "/confirm-appointment",
+  requireRole("PATIENT"),
+  asyncHandler(postConfirmAppointment),
 );
 
 router.get("/:id", requireRole("PATIENT", "DOCTOR"), asyncHandler(getPayment));

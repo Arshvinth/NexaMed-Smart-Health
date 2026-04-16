@@ -129,3 +129,6 @@ export async function listPayments({
     totalPages: Math.ceil(total / limit) || 1,
   };
 }
+export async function getPaymentByAppointmentId(appointmentId) {
+  return Payment.findOne({ appointmentId });
+}
