@@ -101,6 +101,19 @@ services:
       - mongo
       - appointment-service
 
+  patient-service:
+    build:
+      context: ../../services/patient-service
+    container_name: shp-patient-service
+    restart: unless-stopped
+    environment:
+      PORT: "8080"
+      NODE_ENV: "production"
+      MONGO_URI: "${MONGO_URI}"
+      CORS_ORIGIN: "http://localhost:3000"
+    depends_on:
+      - mongo
+
   api-gateway:
     build:
       context: ../../services/api-gateway
@@ -117,12 +130,14 @@ services:
       APPOINTMENT_SERVICE_URL: "http://appointment-service:5003"
       TELEMEDICINE_SERVICE_URL: "http://telemedicine-service:5005"
       PAYMENT_SERVICE_URL: "http://payment-service:5004"
+      PATIENT_SERVICE_URL: "http://patient-service:8080"
     depends_on:
       - user-service
       - doctor-service
       - appointment-service
       - telemedicine-service
       - payment-service
+      - patient-service
 
 volumes:
   mongo_data:
