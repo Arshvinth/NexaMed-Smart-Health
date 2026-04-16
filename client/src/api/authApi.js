@@ -23,3 +23,12 @@ export async function loginUser({ email, password }) {
   });
   return res.data; // { user, token }
 }
+
+export async function logoutUser() {
+  const token = localStorage.getItem("token");
+  await axios.post(
+    `${API_BASE_URL}/api/auth/logout`,
+    {},
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+}

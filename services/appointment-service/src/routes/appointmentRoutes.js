@@ -12,6 +12,7 @@ import {
   postRescheduleAppointment,
   getMyAppointments,
   getAppointment,
+  getAdminFeed,
 } from "../controllers/appointmentController.js";
 
 const router = Router();
@@ -46,6 +47,11 @@ router.get(
   "/:id",
   requireRole("PATIENT", "DOCTOR"),
   asyncHandler(getAppointment),
+);
+router.get(
+  "/admin/feed", 
+  requireRole("ADMIN"), 
+  asyncHandler(getAdminFeed)
 );
 
 export default router;

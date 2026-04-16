@@ -5,6 +5,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import {
   postCreatePaymentIntent,
   getPayment,
+  getPaymentsAdmin,
 } from "../controllers/paymentController.js";
 
 const router = Router();
@@ -17,6 +18,14 @@ router.post(
   requireRole("PATIENT"),
   asyncHandler(postCreatePaymentIntent),
 );
+
+router.get(
+  "/admin",
+  auth,
+  requireRole("ADMIN"),
+  asyncHandler(getPaymentsAdmin)
+);
+
 router.get("/:id", requireRole("PATIENT", "DOCTOR"), asyncHandler(getPayment));
 
 export default router;

@@ -3,6 +3,7 @@ import cors from "cors";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import adminOverviewRoutes from "./routes/adminOverviewRoutes.js";
 
 const app = express();
 
@@ -39,15 +40,18 @@ app.use(
   }),
 );
 
+app.use("/api", adminOverviewRoutes);
+app.get("/api/_ping", (_req, res) => res.json({ ok: true }));
+
 app.get("/health", (_req, res) => {
   res.status(200).json({
     status: "ok",
     service: "api-gateway",
     upstreams: {
+      user: userServiceUrl,
       doctor: doctorServiceUrl,
       appointment: appointmentServiceUrl,
       telemedicine: telemedicineServiceUrl,
-      user: userServiceUrl,
       payment: paymentServiceUrl,
     },
   });
@@ -71,13 +75,15 @@ function buildProxy(target, pathFilter, options = {}) {
   });
 }
 
-// Doctor service routes
+// User service routes
 app.use(
   buildProxy(userServiceUrl, (path) => {
+    if (path === "/api/admin/overview") return false;
     return path.startsWith("/api/auth") || path.startsWith("/api/admin");
   })
 );
 
+// Doctor service routes
 app.use(
   buildProxy(doctorServiceUrl, (path) => {
     return (
