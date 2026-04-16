@@ -1,9 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { getAuthHeaders } from "../../utils/userAuth";
 
+// API gateway base URL
 const API_GATEWAY_BASE_URL =
   process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
 
+
+// Helper to extract error message text from API responses
 function readErrorMessage(body) {
   if (!body) return "Request failed";
   if (typeof body.message === "string") return body.message;
@@ -11,6 +14,7 @@ function readErrorMessage(body) {
   return "Request failed";
 }
 
+// Component: allows doctor to view, add, and remove availability slots
 export default function Availability() {
   const [slots, setSlots] = useState([]);
   const [startTime, setStartTime] = useState("");
@@ -23,6 +27,7 @@ export default function Availability() {
   const [success, setSuccess] = useState("");
 
   async function fetchSlots() {
+    // Fetch availability slots from API
     const response = await fetch(`${API_GATEWAY_BASE_URL}/api/doctors/me/availability`, {
       method: "GET",
       headers: {
@@ -49,6 +54,7 @@ export default function Availability() {
   useEffect(() => {
     let isMounted = true;
 
+    // Load availability when component mounts
     async function loadAvailability() {
       setLoading(true);
       setError("");
@@ -72,12 +78,14 @@ export default function Availability() {
     };
   }, []);
 
+  // Sort slots by start time for display
   const sortedSlots = useMemo(() => {
     return [...slots].sort(
       (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
     );
   }, [slots]);
 
+  // Validate inputs and submit a new availability slot
   async function handleAddSlot(event) {
     event.preventDefault();
     setSuccess("");
@@ -185,6 +193,7 @@ export default function Availability() {
     }
   }
 
+  // Delete an availability slot by ID
   async function handleDeleteSlot(slotId) {
     setSuccess("");
     setError("");
@@ -222,6 +231,7 @@ export default function Availability() {
     }
   }
 
+  // Refresh slots list from API
   async function refreshSlots() {
     setError("");
     setSuccess("");

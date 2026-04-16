@@ -5,6 +5,7 @@ const API_GATEWAY_BASE_URL =
   process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
 
 
+// Frequency options for medicine dosing
 const FREQUENCY_OPTIONS = [
   "Once daily",
   "Twice daily",
@@ -15,6 +16,7 @@ const FREQUENCY_OPTIONS = [
   "As needed",
 ];
 
+// Common dosage suggestions for datalist
 const DOSAGE_SUGGESTIONS = [
   "100mg",
   "250mg",
@@ -25,6 +27,7 @@ const DOSAGE_SUGGESTIONS = [
   "10ml",
 ];
 
+// Popular medicine suggestions for autocompletion
 const MEDICINE_SUGGESTIONS = [
   "Paracetamol",
   "Ibuprofen",
@@ -38,6 +41,7 @@ const MEDICINE_SUGGESTIONS = [
   "Losartan",
 ];
 
+// fetch prescriptions issued by the logged-in doctor
 async function fetchMyPrescriptions() {
   const response = await fetch(`${API_GATEWAY_BASE_URL}/api/prescriptions`, {
     method: "GET",
@@ -52,6 +56,7 @@ async function fetchMyPrescriptions() {
   return response.json();
 }
 
+// Helper: update an existing prescription
 async function updatePrescription(id, payload) {
   const response = await fetch(
     `${API_GATEWAY_BASE_URL}/api/prescriptions/${id}`,
@@ -70,6 +75,7 @@ async function updatePrescription(id, payload) {
   return response.json();
 }
 
+// Helper: delete a prescription by id
 async function deletePrescription(id) {
   const response = await fetch(
     `${API_GATEWAY_BASE_URL}/api/prescriptions/${id}`,
@@ -85,6 +91,7 @@ async function deletePrescription(id) {
   }
 }
 
+// Helper: parse common error response payloads
 async function parseErrorResponse(response) {
   let message = "Request failed";
   try {
@@ -96,7 +103,7 @@ async function parseErrorResponse(response) {
   return `${response.status}: ${message}`;
 }
 
-// Fetch a user profile from user-service (returns top-level user or wrapped `data`)
+// Helper: fetch a user profile from user-service (may be wrapped in `data`)
 async function fetchUserProfile(userId) {
   const url = `${API_GATEWAY_BASE_URL}/api/auth/users/${userId}`;
   const res = await fetch(url, {
@@ -113,6 +120,7 @@ async function fetchUserProfile(userId) {
   return data?.data ?? data ?? {};
 }
 
+// Helper: list appointments for the logged-in doctor
 async function listDoctorAppointments() {
   const response = await fetch(`${API_GATEWAY_BASE_URL}/api/appointments/me`, {
     method: "GET",
@@ -127,6 +135,7 @@ async function listDoctorAppointments() {
   return Array.isArray(data) ? data : [];
 }
 
+// Component: DoctorPrescriptions — state, data loaders, and handlers
 export default function DoctorPrescriptions() {
   const [prescriptions, setPrescriptions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -139,10 +148,12 @@ export default function DoctorPrescriptions() {
   const [deletingId, setDeletingId] = useState(null);
   const [formItemErrors, setFormItemErrors] = useState([]);
 
+  // Appointment list and cached user profiles for display
   const [appointments, setAppointments] = useState([]);
   const [userProfiles, setUserProfiles] = useState({});
   const [search, setSearch] = useState("");
 
+  // Load doctor's appointments for contextual data (queue numbers etc.)
   async function load() {
     setLoading(true);
     setError("");
@@ -161,6 +172,7 @@ export default function DoctorPrescriptions() {
   }, []);
 
 
+  // Load prescriptions for this doctor on mount
   useEffect(() => {
     let active = true;
 
@@ -187,7 +199,7 @@ export default function DoctorPrescriptions() {
     };
   }, []);
 
-  // Fetch missing user profiles for prescriptions so we can show full names
+  // Prefetch missing user profiles referenced by prescriptions for display
   useEffect(() => {
     const ids = Array.from(new Set(prescriptions.map((p) => p.patientUserId).filter(Boolean)));
     const missing = ids.filter((id) => !userProfiles[id]);
@@ -210,6 +222,7 @@ export default function DoctorPrescriptions() {
     });
   }, [prescriptions, userProfiles]);
 
+  // Open edit modal and populate form with prescription data
   function openEdit(p) {
     setEditingPrescription(p);
     setFormNotes(p.notes || "");
@@ -237,6 +250,7 @@ export default function DoctorPrescriptions() {
     setEditing(true);
   }
 
+  // Close edit modal and reset form state
   function closeEdit() {
     setEditing(false);
     setEditingPrescription(null);
@@ -246,6 +260,7 @@ export default function DoctorPrescriptions() {
     setFormItemErrors([]);
   }
 
+  // Form helper: update field for a specific form item
   function updateFormItem(index, field, value) {
     setFormItems((prev) => {
       const next = [...prev];
@@ -263,6 +278,7 @@ export default function DoctorPrescriptions() {
     });
   }
 
+  // Form helper: append a new medicine row
   function addFormItem() {
     setFormItems((prev) => [
       ...prev,
@@ -274,11 +290,13 @@ export default function DoctorPrescriptions() {
     ]);
   }
 
+  // remove medicine row at index
   function removeFormItem(index) {
     setFormItems((prev) => prev.filter((_, i) => i !== index));
     setFormItemErrors((prev) => prev.filter((_, i) => i !== index));
   }
 
+  // validate and submit edited prescription to server
   async function handleSaveEdit(e) {
     e.preventDefault();
     if (!editingPrescription) return;
@@ -365,6 +383,7 @@ export default function DoctorPrescriptions() {
     }
   }
 
+  // Handler: delete a prescription after user confirmation
   async function handleDelete(id) {
     if (!window.confirm("Are you sure you want to delete this prescription?")) {
       return;
@@ -383,7 +402,7 @@ export default function DoctorPrescriptions() {
     }
   }
 
-  // Build a map of appointmentId to appointment details for quick lookup
+  // Memo: map appointmentId -> appointment details for quick lookup
   const appointmentDetails = React.useMemo(() => {
     const map = {};
     appointments.forEach((a) => {
@@ -392,6 +411,7 @@ export default function DoctorPrescriptions() {
     return map;
   }, [appointments]);
 
+  // Memo: filter prescriptions by search term (patient name or queue number)
   const filteredPrescriptions = useMemo(() => {
     const q = (search || "").trim().toLowerCase();
     if (!q) return prescriptions;
@@ -410,6 +430,7 @@ export default function DoctorPrescriptions() {
     });
   }, [prescriptions, userProfiles, appointmentDetails, search]);
 
+  // Render: header, search, list of prescriptions, and edit modal
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -448,7 +469,7 @@ export default function DoctorPrescriptions() {
         </div>
       ) : null}
 
-      {/* Prescription List View Section - styled professionally */}
+      {/* Prescription List View Section - styled container */}
       <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-slate-100 p-8 space-y-6 shadow-lg">
         {loading ? (
           <div className="flex items-center justify-center min-h-[120px]">
@@ -466,7 +487,7 @@ export default function DoctorPrescriptions() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Map through prescriptions returned from doctor-service */}
+            {/* Map through filtered prescriptions returned from doctor-service */}
               {filteredPrescriptions.map((p) => {
               // Derive a readable patient label; fall back to patientUserId
                 const displayPatientName =
@@ -557,7 +578,7 @@ export default function DoctorPrescriptions() {
                     </div>
                   ) : null}
 
-                  {/* Action buttons (Update/Delete) - unchanged */}
+                  {/* Action buttons (Update/Delete) */}
                   <div className="mt-4 flex flex-wrap justify-end gap-2">
                     <button
                       type="button"
@@ -582,6 +603,7 @@ export default function DoctorPrescriptions() {
         )}
       </div>
 
+      {/* Edit modal rendered when editing state is active */}
       {editing ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
           <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl space-y-4">

@@ -2,11 +2,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import { getAuthHeaders } from "../../utils/userAuth";
 import { useParams } from "react-router-dom";
 
-// API gateway for doctor + appointments
+// Page: Patient Reports — view patient profiles and uploaded medical reports
+// API gateway base URL for backend requests
 const API_GATEWAY_BASE_URL =
   process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
 
-// Load confirmed appointments for the logged-in doctor
+// Helper: load confirmed appointments for the logged-in doctor
 async function fetchDoctorAppointments() {
   const res = await fetch(
     `${API_GATEWAY_BASE_URL}/api/appointments/me?status=confirmed`,
@@ -24,7 +25,7 @@ async function fetchDoctorAppointments() {
   return res.json();
 }
 
-// Fetch all patient profiles from patient-service
+// Helper: fetch all patient profiles from patient-service
 async function fetchAllPatients() {
   const res = await fetch(`${API_GATEWAY_BASE_URL}/api/patients`);
 
@@ -37,7 +38,7 @@ async function fetchAllPatients() {
   return Array.isArray(data?.data) ? data.data : [];
 }
 
-// Fetch medical reports for a specific patient (by Patient _id)
+// Helper: fetch medical reports for a specific patient (by patient _id)
 async function fetchMedicalReports(patientId) {
   const res = await fetch(
     `${API_GATEWAY_BASE_URL}/api/medical-reports/${patientId}`,
@@ -53,6 +54,7 @@ async function fetchMedicalReports(patientId) {
   return Array.isArray(data?.data) ? data.data : [];
 }
 
+// Helper: fetch a user profile from user-service (may be wrapped in `data`)
 async function fetchUserProfile(userId) {
   const url = `${API_GATEWAY_BASE_URL}/api/auth/users/${userId}`;
   const headers = getAuthHeaders();
@@ -74,21 +76,25 @@ async function fetchUserProfile(userId) {
   return data?.data ?? data ?? {};
 }
 
+// Component: patient reports UI and state
 export default function PatientReports() {
   // Route param holds patient userId (e.g., "pat1") when navigated with it
   const { patientId: routePatientUserId } = useParams();
 
+  // Local state: appointments and patient service data
   const [appointments, setAppointments] = useState([]);
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Selected patient userId and their fetched reports
   const [selectedPatientUserId, setSelectedPatientUserId] = useState(
     routePatientUserId || "",
   );
   const [reports, setReports] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
 
+  // Cache of user profiles (from user-service) and report loading errors
   const [userProfiles, setUserProfiles] = useState({});
   const [reportsError, setReportsError] = useState("");
 
@@ -195,9 +201,10 @@ export default function PatientReports() {
     };
   }, [selectedPatient]);
 
+  // Whether any patients exist for display
   const hasPatients = doctorPatients.length > 0;
 
-  //Get particular userId and retrieve fullname from user table in user-service, then display it in the UI instead of userId.
+  // Prefetch user-service profiles for patients to show full names
   useEffect(() => {
     const missingUserIds = doctorPatients
       .map(p => p.userId)
@@ -221,6 +228,7 @@ export default function PatientReports() {
     });
   }, [doctorPatients, userProfiles]);
 
+  // left side patient list and right details/reports panel
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">

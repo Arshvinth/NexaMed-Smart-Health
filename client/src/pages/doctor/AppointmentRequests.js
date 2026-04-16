@@ -1,12 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAuthHeaders } from "../../utils/userAuth";
+// Imports and utilities
 
 const API_GATEWAY_BASE_URL =
   process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
+// Base URL for API gateway
 
 const CANCELLABLE_STATUSES = ["pending", "confirmed"];
 const COMPLETABLE_STATUSES = ["confirmed"];
+// Available filter options for the appointments list
 const FILTERS = [
   "pending",
   "confirmed",
@@ -17,6 +20,7 @@ const FILTERS = [
 ];
 
 function getStatusLabel(status) {
+  // Convert status keys to human-readable labels
   return status
     ?.split("_")
     ?.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
@@ -24,6 +28,7 @@ function getStatusLabel(status) {
 }
 
 function formatDateTime(value) {
+  // Format date/time values for display
   if (!value) return "N/A";
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "Invalid date";
@@ -31,6 +36,7 @@ function formatDateTime(value) {
 }
 
 function statusBadgeClass(status) {
+  // Map status to badge CSS classes
   switch (status) {
     case "pending":
       return "bg-amber-100 text-amber-800";
@@ -47,18 +53,20 @@ function statusBadgeClass(status) {
 }
 
 async function parseErrorResponse(response) {
+  // Parse API error responses into readable messages
   let message = "Request failed";
   try {
     const body = await response.json();
     if (body?.message) message = body.message;
   } catch (_error) {
-    // Keep fallback if response body is not JSON.
+    console.error("Failed to parse error response:", _error);
   }
   return `${response.status}: ${message}`;
 }
 
 //List appointments for the logged in doctor
 async function listDoctorAppointments() {
+  // Fetch appointments for the current doctor
   const response = await fetch(`${API_GATEWAY_BASE_URL}/api/appointments/me`, {
     method: "GET",
     headers: getAuthHeaders(),
@@ -73,6 +81,7 @@ async function listDoctorAppointments() {
 }
 
 async function cancelAppointment(appointmentId, reason) {
+  // Send cancellation PATCH for an appointment
   const response = await fetch(
     `${API_GATEWAY_BASE_URL}/api/appointments/${appointmentId}/cancel`,
     {
@@ -90,6 +99,7 @@ async function cancelAppointment(appointmentId, reason) {
 }
 
 async function completeAppointment(appointmentId) {
+  // Mark an appointment as completed via API
   const response = await fetch(
     `${API_GATEWAY_BASE_URL}/api/appointments/${appointmentId}/complete`,
     {
@@ -107,6 +117,7 @@ async function completeAppointment(appointmentId) {
 
 // Fetch a user profile from user-service (returns top-level user or wrapped `data`)
 async function fetchUserProfile(userId) {
+  // Retrieve a user's profile (used to show patient names)
   const url = `${API_GATEWAY_BASE_URL}/api/auth/users/${userId}`;
   const res = await fetch(url, {
     method: "GET",
@@ -123,7 +134,9 @@ async function fetchUserProfile(userId) {
 }
 
 export default function AppointmentRequests() {
+  // Doctor-facing component that lists and manages appointment requests
   const navigate = useNavigate();
+  // Component state: appointments, profiles, UI flags and messages
   const [appointments, setAppointments] = useState([]);
   const [userProfiles, setUserProfiles] = useState({});
   const [activeFilter, setActiveFilter] = useState("ALL");
@@ -133,6 +146,7 @@ export default function AppointmentRequests() {
   const [success, setSuccess] = useState("");
 
   async function load() {
+    // Load appointments from the API and update state
     setLoading(true);
     setError("");
     try {
@@ -146,11 +160,13 @@ export default function AppointmentRequests() {
   }
 
   useEffect(() => {
+    // Initial load when component mounts
     load();
   }, []);
 
   // Fetch missing user profiles for appointments to show full names
   useEffect(() => {
+    // Load any missing patient profiles for display
     const missing = Array.from(
       new Set(appointments.map((a) => a.patientUserId).filter(Boolean)),
     ).filter((id) => !userProfiles[id]);
@@ -173,12 +189,14 @@ export default function AppointmentRequests() {
     });
   }, [appointments, userProfiles]);
 
+  // Compute visible appointments based on the active filter
   const visibleRows = useMemo(() => {
     if (activeFilter === "ALL") return appointments;
     return appointments.filter((a) => a.status === activeFilter);
   }, [appointments, activeFilter]);
 
   async function handleCancel(id) {
+    // Prompt for reason and cancel appointment via API
     const reason = window.prompt("Reason for cancellation:", "");
 
     if (reason === null) return;
@@ -204,6 +222,7 @@ export default function AppointmentRequests() {
   }
 
   async function handleComplete(id) {
+    // Mark appointment complete and refresh list
     setBusyId(id);
     setError("");
     setSuccess("");
@@ -220,6 +239,7 @@ export default function AppointmentRequests() {
   }
 
   async function handleStartConsultation(appt) {
+    // Navigate to the consultation room for a confirmed appointment
     if (appt.status !== "confirmed") {
       setError("Only confirmed appointments can start a consultation.");
       return;
@@ -249,6 +269,7 @@ export default function AppointmentRequests() {
         </button>
       </div>
 
+      {/* Filter controls */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4">
         <div className="flex flex-wrap gap-2">
           {FILTERS.map((f) => (
@@ -281,8 +302,10 @@ export default function AppointmentRequests() {
         </div>
       ) : null}
 
+      {/* Appointments list container */}
       <div className="rounded-3xl border border-slate-200 bg-slate-50/50 p-2 shadow-sm">
         <div className="rounded-[1.3rem] border border-slate-100 bg-white p-6">
+          {/* Loading / empty / list states */}
           {loading ? (
             <div className="flex items-center justify-center py-12 space-x-3">
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-sky-600 border-t-transparent" />
@@ -308,6 +331,7 @@ export default function AppointmentRequests() {
                   >
                     <div className="flex flex-col lg:flex-row lg:items-stretch">
 
+                      {/* Reference / status column */}
                       <div className="flex flex-col border-b border-slate-100 p-5 lg:w-64 lg:border-b-0 lg:border-r bg-slate-50/50">
                         <span className="mb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Reference ID</span>
                         <code className="mb-4 text-xs font-bold text-slate-900">{appt._id.slice(-12)}</code>
@@ -324,6 +348,7 @@ export default function AppointmentRequests() {
                         </div>
                       </div>
 
+                      {/* Main appointment details */}
                       <div className="flex-1 p-5">
                         <div className="grid grid-cols-1 gap-y-4 sm:grid-cols-2 md:grid-cols-3">
                           <InfoBlock label="Patient" value={userProfiles[appt.patientUserId]?.fullName || appt.patientUserId} />
@@ -346,6 +371,7 @@ export default function AppointmentRequests() {
                         )}
                       </div>
 
+                      {/* Action buttons (consult / prescription) */}
                       <div className="flex flex-col justify-center gap-2 border-t border-slate-100 p-5 lg:w-56 lg:border-t-0 lg:border-l">
                         {canStartConsultation && (
                           <button

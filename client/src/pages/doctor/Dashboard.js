@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 const API_GATEWAY_BASE_URL =
   process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
 
+// Helper: fetch JSON from API and handle errors
 async function fetchJson(path) {
   const response = await fetch(`${API_GATEWAY_BASE_URL}${path}`, {
     method: "GET",
@@ -31,6 +32,7 @@ async function fetchJson(path) {
   return response.json();
 }
 
+// Load all dashboard data in parallel (profile, availability, prescriptions)
 async function loadDashboardData() {
   const [profileResult, availabilityResult, prescriptionsResult] = await Promise.allSettled([
     fetchJson("/api/doctors/me/profile"),
@@ -61,6 +63,7 @@ async function loadDashboardData() {
   };
 }
 
+// Component: Doctor dashboard UI and state
 export default function Dashboard() {
   const [profile, setProfile] = useState(null);
   const [availability, setAvailability] = useState([]);
@@ -72,6 +75,7 @@ export default function Dashboard() {
 
   const [doctorDetail, setDoctorDetail] = useState(null);
 
+  // Function to load dashboard data - background option for refresh
   const loadDashboard = useCallback(async ({ background = false } = {}) => {
     if (background) {
       setRefreshing(true);
@@ -108,10 +112,12 @@ export default function Dashboard() {
     }
   }, []);
 
+  // Initial load when component mounts
   useEffect(() => {
     loadDashboard();
   }, [loadDashboard]);
 
+  // Compute upcoming availability count
   const now = Date.now();
   const upcomingAvailability = useMemo(
     () =>
@@ -122,6 +128,7 @@ export default function Dashboard() {
     [availability, now]
   );
 
+  // Render dashboard UI
   return (
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -153,6 +160,7 @@ export default function Dashboard() {
         </div>
       ) : null}
 
+      {/* Top-level metric cards */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Verification"
@@ -176,6 +184,7 @@ export default function Dashboard() {
         />
       </div>
 
+      {/* Profile snapshot and quick actions */}
       <div className="grid md:grid-cols-2 gap-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <h2 className="text-lg font-bold text-slate-900">Profile Snapshot</h2>
@@ -212,6 +221,7 @@ export default function Dashboard() {
 }
 
 function MetricCard({ title, value, desc }) {
+  // Small reusable card for dashboard metrics
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 hover:shadow-sm transition">
       <div className="text-sm font-semibold text-slate-500">{title}</div>
@@ -222,6 +232,7 @@ function MetricCard({ title, value, desc }) {
 }
 
 function Row({ label, value }) {
+  // Simple label/value row used in profile snapshot
   return (
     <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-2">
       <span className="text-slate-500">{label}</span>
@@ -231,6 +242,7 @@ function Row({ label, value }) {
 }
 
 function ActionLink({ to, title, desc }) {
+  // Link tile for quick actions
   return (
     <Link to={to} className="rounded-xl border border-slate-200 p-4 hover:bg-slate-50 transition">
       <div className="font-semibold text-slate-900">{title}</div>
@@ -240,6 +252,7 @@ function ActionLink({ to, title, desc }) {
 }
 
 function formatYears(value) {
+  // Format years of experience for display
   if (typeof value !== "number") return "Not updated";
   if (value === 0) return "0 years";
   if (value === 1) return "1 year";

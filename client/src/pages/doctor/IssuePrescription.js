@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { getAuthHeaders } from "../../utils/userAuth";
 import { useNavigate, useParams } from "react-router-dom";
+// Page: IssuePrescription — issue and submit e-prescriptions for appointments
 
 const API_GATEWAY_BASE_URL =
   process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
 
+// Frequency options for medicines
 const FREQUENCY_OPTIONS = [
   "Once daily",
   "Twice daily",
@@ -15,6 +17,7 @@ const FREQUENCY_OPTIONS = [
   "As needed",
 ];
 
+// Common dosage suggestions for quick entry
 const DOSAGE_SUGGESTIONS = [
   "100mg",
   "250mg",
@@ -25,6 +28,7 @@ const DOSAGE_SUGGESTIONS = [
   "10ml",
 ];
 
+// Popular medicine suggestions for autocompletion
 const MEDICINE_SUGGESTIONS = [
   "Paracetamol",
   "Ibuprofen",
@@ -38,6 +42,7 @@ const MEDICINE_SUGGESTIONS = [
   "Losartan",
 ];
 
+// Helper: fetch appointment details by id
 async function fetchAppointment(appointmentId) {
   const response = await fetch(
     `${API_GATEWAY_BASE_URL}/api/appointments/${appointmentId}`,
@@ -55,6 +60,7 @@ async function fetchAppointment(appointmentId) {
   return response.json();
 }
 
+// Helper: send prescription payload to backend
 async function createPrescription(payload) {
 
   console.log("Creating prescription with payload:", payload);
@@ -72,7 +78,7 @@ async function createPrescription(payload) {
   return response.json();
 }
 
-// Fetch a user profile from user-service (returns top-level user or wrapped `data`)
+// Helper: fetch a user profile from user-service (may be wrapped in `data`)
 async function fetchUserProfile(userId) {
   const url = `${API_GATEWAY_BASE_URL}/api/auth/users/${userId}`;
   const res = await fetch(url, {
@@ -89,6 +95,7 @@ async function fetchUserProfile(userId) {
   return data?.data ?? data ?? {};
 }
 
+// Component state: appointment, form fields, loading and helper data
 export default function IssuePrescription() {
   const { appointmentId } = useParams();
   const navigate = useNavigate();
@@ -102,14 +109,18 @@ export default function IssuePrescription() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
 
+  // Optional: loaded patient profile when appointment lacks name fields
   const [patientProfile, setPatientProfile] = useState(null);
 
+  // Cache of user profiles for appointments dropdown
   const [userProfiles, setUserProfiles] = useState({});
 
+  // Appointments list and loading state for selection when no appointmentId
   const [appointments, setAppointments] = useState([]);
   const [appointmentsLoading, setAppointmentsLoading] = useState(false);
   const [itemErrors, setItemErrors] = useState([]);
 
+  // Load appointment details when `appointmentId` is provided
   useEffect(() => {
     let active = true;
 
@@ -166,9 +177,8 @@ export default function IssuePrescription() {
     };
   }, [appointment]);
 
+  // If no `appointmentId`, load confirmed appointments so doctor can pick one
   useEffect(() => {
-    // When opened from sidebar without an appointmentId, let the doctor
-    // pick one of their confirmed/completed appointments to issue a prescription for.
     if (appointmentId) return;
 
     let active = true;
@@ -204,7 +214,7 @@ export default function IssuePrescription() {
     };
   }, [appointmentId]);
 
-  // Fetch missing user profiles for the appointments dropdown so we can show names
+  // Prefetch missing user profiles for the appointments dropdown
   useEffect(() => {
     const ids = Array.from(new Set(appointments.map((a) => a.patientUserId).filter(Boolean)));
     const missing = ids.filter((id) => !userProfiles[id]);
@@ -227,6 +237,7 @@ export default function IssuePrescription() {
     });
   }, [appointments, userProfiles]);
 
+  // Form helpers: update a medicine row's field
   function updateItem(index, field, value) {
     setItems((prev) => {
       const next = [...prev];
@@ -244,6 +255,7 @@ export default function IssuePrescription() {
     });
   }
 
+  // Form helpers: append a new medicine row
   function addItem() {
     setItems((prev) => [
       ...prev,
@@ -251,10 +263,12 @@ export default function IssuePrescription() {
     ]);
   }
 
+  // Form helpers: remove a medicine row by index
   function removeItem(index) {
     setItems((prev) => prev.filter((_, i) => i !== index));
   }
 
+  // Submit handler: validate form and post prescription to API
   async function handleSubmit(e) {
     e.preventDefault();
     if (!appointmentId || !appointment?.patientUserId) {
@@ -338,6 +352,7 @@ export default function IssuePrescription() {
     }
   }
 
+  // Compute display name for selected patient
   const selectedPatientName =
     appointment?.patientName ||
     appointment?.patientFullName ||
@@ -346,6 +361,7 @@ export default function IssuePrescription() {
     appointment?.patientUserId ||
     "";
 
+  // Render page UI: alerts, appointment selector, and prescription form
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-extrabold">Issue Prescription</h1>
@@ -557,6 +573,7 @@ export default function IssuePrescription() {
                 </div>
               ))}
             </div>
+            {/* Datalists for dosage and medicine suggestions */}
             <datalist id="dosage-options">
               {DOSAGE_SUGGESTIONS.map((opt) => (
                 <option key={opt} value={opt} />

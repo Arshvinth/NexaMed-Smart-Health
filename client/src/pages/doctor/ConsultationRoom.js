@@ -1,10 +1,13 @@
+// ConsultationRoom: view and open consultation sessions (meeting iframe)
 import React, { useEffect, useState } from "react";
 import { getAuthHeaders } from "../../utils/userAuth";
 import { useNavigate, useParams } from "react-router-dom";
 
+// API gateway base URL
 const API_GATEWAY_BASE_URL =
   process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
 
+// Fetch consultation session details (includes meeting link)
 async function fetchConsultationSession(appointmentId) {
   const response = await fetch(
     `${API_GATEWAY_BASE_URL}/api/sessions/${appointmentId}`,
@@ -22,7 +25,9 @@ async function fetchConsultationSession(appointmentId) {
   return response.json();
 }
 
+// Component: displays a consultation room and allows selecting appointments
 export default function ConsultationRoom() {
+  // Route params, navigation and component state
   const { sessionId } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -35,6 +40,7 @@ export default function ConsultationRoom() {
   useEffect(() => {
     let active = true;
 
+    // Load session when `sessionId` changes
     async function load() {
       if (!sessionId) {
         // Nothing selected yet; keep room empty but not in error state.
@@ -71,6 +77,7 @@ export default function ConsultationRoom() {
 
     let active = true;
 
+    // Load doctor's confirmed appointments when no session selected
     async function loadAppointments() {
       setAppointmentsLoading(true);
       try {
@@ -103,7 +110,7 @@ export default function ConsultationRoom() {
     };
   }, [sessionId]);
 
-  // Fetch missing user profiles for the appointments dropdown so we can show names
+  // Load patient profiles for dropdown labels
   useEffect(() => {
     const ids = Array.from(new Set(appointments.map((a) => a.patientUserId).filter(Boolean)));
     const missing = ids.filter((id) => !userProfiles[id]);
@@ -134,6 +141,7 @@ export default function ConsultationRoom() {
     });
   }, [appointments, userProfiles]);
 
+  // Extract meeting link from session data
   const meetingLink = session?.meetingLink || "";
 
   return (
@@ -147,6 +155,7 @@ export default function ConsultationRoom() {
       ) : null}
 
       <div className="rounded-2xl border border-slate-200 bg-white p-6">
+        {/* Appointment selection dropdown (navigates to session) */}
         {!sessionId ? (
           <div className="mb-4 space-y-2">
             <p className="text-sm text-slate-600">
@@ -203,6 +212,7 @@ export default function ConsultationRoom() {
               : "Choose a confirmed appointment above to start a consultation."}
           </p>
 
+          {/* Render meeting iframe when meetingLink is available */}
           {meetingLink ? (
             <button
               type="button"
@@ -233,6 +243,7 @@ export default function ConsultationRoom() {
           )}
         </div>
 
+        {/* Show session metadata (IDs) when a session is selected */}
         {sessionId ? (
           <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
             <div>
