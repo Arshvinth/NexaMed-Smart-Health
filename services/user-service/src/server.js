@@ -8,7 +8,7 @@ import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import { seedAdminIfNeeded } from "./config/seedAdmin.js";
 
-dotenv.config({ path: "./src/.env" });
+dotenv.config();
 
 const app = express();
 
