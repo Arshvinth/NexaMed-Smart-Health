@@ -53,7 +53,7 @@ export const updateMedicalReport = async (reportId, files, body) => {
 
     const updatedReport = await MedicalReport.findByIdAndUpdate(
         reportId,
-        { file: { url: result.secure_url } },
+        updateData,
         { new: true }
     );
 
