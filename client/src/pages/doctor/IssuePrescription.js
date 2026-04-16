@@ -56,7 +56,9 @@ async function fetchAppointment(appointmentId) {
 }
 
 async function createPrescription(payload) {
-  const response = await fetch(`${API_GATEWAY_BASE_URL}/api/prescriptions`, {
+
+  console.log("Creating prescription with payload:", payload);
+  const response = await fetch(`${API_GATEWAY_BASE_URL}/api/prescriptions/`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
@@ -68,6 +70,23 @@ async function createPrescription(payload) {
   }
 
   return response.json();
+}
+
+// Fetch a user profile from user-service (returns top-level user or wrapped `data`)
+async function fetchUserProfile(userId) {
+  const url = `${API_GATEWAY_BASE_URL}/api/auth/users/${userId}`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    data = text;
+  }
+  return data?.data ?? data ?? {};
 }
 
 export default function IssuePrescription() {
@@ -82,6 +101,10 @@ export default function IssuePrescription() {
   ]);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
+
+  const [patientProfile, setPatientProfile] = useState(null);
+
+  const [userProfiles, setUserProfiles] = useState({});
 
   const [appointments, setAppointments] = useState([]);
   const [appointmentsLoading, setAppointmentsLoading] = useState(false);
@@ -116,6 +139,32 @@ export default function IssuePrescription() {
       active = false;
     };
   }, [appointmentId]);
+
+  // Fetch patient profile if appointment loads without a patient name
+  useEffect(() => {
+    let active = true;
+    async function loadProfile() {
+      if (!appointment?.patientUserId) return;
+      // If appointment already contains a name, prefer that
+      if (appointment.patientName || appointment.patientFullName || appointment.patient_user_name) {
+        setPatientProfile(null);
+        return;
+      }
+      try {
+        const profile = await fetchUserProfile(appointment.patientUserId);
+        if (!active) return;
+        setPatientProfile(profile || null);
+      } catch (e) {
+        if (!active) return;
+        setPatientProfile(null);
+      }
+    }
+
+    loadProfile();
+    return () => {
+      active = false;
+    };
+  }, [appointment]);
 
   useEffect(() => {
     // When opened from sidebar without an appointmentId, let the doctor
@@ -154,6 +203,29 @@ export default function IssuePrescription() {
       active = false;
     };
   }, [appointmentId]);
+
+  // Fetch missing user profiles for the appointments dropdown so we can show names
+  useEffect(() => {
+    const ids = Array.from(new Set(appointments.map((a) => a.patientUserId).filter(Boolean)));
+    const missing = ids.filter((id) => !userProfiles[id]);
+    if (missing.length === 0) return;
+
+    Promise.all(
+      missing.map((id) =>
+        fetchUserProfile(id)
+          .then((profile) => ({ id, profile }))
+          .catch(() => ({ id, profile: null })),
+      ),
+    ).then((results) => {
+      setUserProfiles((prev) => {
+        const updated = { ...prev };
+        results.forEach(({ id, profile }) => {
+          updated[id] = profile;
+        });
+        return updated;
+      });
+    });
+  }, [appointments, userProfiles]);
 
   function updateItem(index, field, value) {
     setItems((prev) => {
@@ -251,10 +323,11 @@ export default function IssuePrescription() {
     setItemErrors([]);
 
     try {
+      console.log("Appointment ID:", appointmentId);
       await createPrescription({
-        appointmentId,
+        appointmentId: appointmentId,
         patientUserId: appointment.patientUserId,
-        notes,
+        notes: notes.trim(),
         items: cleanedItems,
       });
       setSuccess("Prescription created successfully.");
@@ -269,6 +342,7 @@ export default function IssuePrescription() {
     appointment?.patientName ||
     appointment?.patientFullName ||
     appointment?.patient_user_name ||
+    patientProfile?.fullName ||
     appointment?.patientUserId ||
     "";
 
@@ -295,7 +369,8 @@ export default function IssuePrescription() {
               Select an appointment to issue a prescription for.
             </p>
             <select
-              className="w-full max-w-md rounded-lg border border-slate-300 p-2 text-sm"
+              aria-label="Select appointment"
+              className="w-full max-w-md rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-800 bg-white shadow-sm"
               disabled={appointmentsLoading || appointments.length === 0}
               defaultValue=""
               onChange={(e) => {
@@ -316,11 +391,12 @@ export default function IssuePrescription() {
                   appt.patientName ||
                   appt.patientFullName ||
                   appt.patient_user_name ||
+                  userProfiles[appt.patientUserId]?.fullName ||
                   appt.patientUserId;
 
                 const queueLabel =
                   typeof appt.queueNumber === "number" || appt.queueNumber
-                    ? `#${appt.queueNumber}`
+                    ? `${appt.queueNumber}`
                     : "No queue";
 
                 const dateTimeLabel = appt.startTime
@@ -329,7 +405,7 @@ export default function IssuePrescription() {
 
                 return (
                   <option key={appt._id} value={appt._id}>
-                    {`${queueLabel} | ${dateTimeLabel} | Patient: ${displayPatientName}`}
+                    {`Queue No: ${queueLabel}  — ${displayPatientName} — Date & Time ${dateTimeLabel} `}
                   </option>
                 );
               })}
@@ -343,7 +419,7 @@ export default function IssuePrescription() {
               Selected appointment
             </p>
             <p>
-              <span className="font-semibold text-slate-900">Patient:</span>{" "}
+              <span className="font-semibold text-slate-900">Patient Name:</span>{" "}
               {selectedPatientName || appointment.patientUserId || "(unknown)"}
             </p>
             <p>
@@ -353,9 +429,13 @@ export default function IssuePrescription() {
                 : "(not set)"}
             </p>
             <p>
-              <span className="font-semibold text-slate-900">Queue #:</span>{" "}
+              <span className="font-semibold text-slate-900">Queue No:</span>{" "}
               {appointment.queueNumber ?? "N/A"}
             </p>
+            <div className="flex justify-end mt-2">
+              <div className="text-xs text-slate-500 mr-2">Patient ID</div>
+              <div className="font-mono text-xs text-slate-700">{appointment.patientUserId || (loading ? "Loading..." : "(unknown)")}</div>
+            </div>
           </div>
         ) : (
           <p className="text-slate-600">
@@ -363,13 +443,6 @@ export default function IssuePrescription() {
             <span className="font-semibold">(select one)</span>
           </p>
         )}
-
-        <p className="text-slate-600">
-          Patient ID:{" "}
-          <span className="font-semibold">
-            {appointment?.patientUserId || (loading ? "Loading..." : "(unknown)")}
-          </span>
-        </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
