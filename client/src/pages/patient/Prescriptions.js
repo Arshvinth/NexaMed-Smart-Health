@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
+import { getAuthHeaders } from "../../utils/userAuth";
 
 export default function Prescriptions() {
   const [prescriptions, setPrescriptions] = useState([]);
@@ -14,18 +15,13 @@ export default function Prescriptions() {
 
   const API_GATEWAY_BASE_URL = process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
 
-  function getAuthHeaders() {
-    return {
-      "x-user-id": localStorage.getItem("x-user-id") || "TEST001",
-      "x-role": "PATIENT",
-      "x-verification-status": "VERIFIED",
-    };
-  }
+  // use shared getAuthHeaders from utils
 
   const fetchPrescriptions = async () => {
     try {
       setLoading(true);
-      const patientId = localStorage.getItem('x-user-id') || 'TEST001';
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const patientId = storedUser?.id || localStorage.getItem('x-user-id') || 'TEST001';
 
       const response = await fetch(`${API_GATEWAY_BASE_URL}/api/prescription/${patientId}`, {
         headers: getAuthHeaders()
@@ -121,16 +117,20 @@ export default function Prescriptions() {
       });
       formData.append('doctorId', doctorId);
 
-      const patientId = localStorage.getItem('x-user-id') || 'TEST001';
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const patientId = storedUser?.id || localStorage.getItem('x-user-id') || 'TEST001';
       formData.append('userid', patientId);
+
+      // Build headers from shared helper but remove Content-Type for FormData
+      const headers = getAuthHeaders();
+      if (headers["Content-Type"]) delete headers["Content-Type"];
+      headers["x-user-id"] = patientId;
+      headers["x-role"] = "PATIENT";
+      headers["x-verification-status"] = "VERIFIED";
 
       const response = await fetch(`${API_GATEWAY_BASE_URL}/api/prescription/upload`, {
         method: 'POST',
-        headers: {
-          'x-user-id': patientId,
-          'x-role': 'PATIENT',
-          'x-verification-status': 'VERIFIED'
-        },
+        headers,
         body: formData
       });
 

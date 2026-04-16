@@ -1,26 +1,13 @@
 import React, { useState } from "react";
-
+import { getAuthHeaders } from "../../utils/userAuth";
 
 const API_GATEWAY_BASE_URL = process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
 
-//developing purpose
+// developing purpose fallback
 const DEV_AUTH = {
   userId: process.env.REACT_APP_PATIENT_USER_ID || "P0001",
   role: "PATIENT",
 };
-
-function getAuthHeaders() {
-  const storedUserId = localStorage.getItem("x-user-id");
-  const storedRole = localStorage.getItem("x-role");
-  const storedVerification = localStorage.getItem("x-verification-status");
-
-  return {
-    "Content-Type": "application/json",
-    "x-user-id": storedUserId || DEV_AUTH.userId,
-    "x-role": storedRole || DEV_AUTH.role,
-    "x-verification-status": storedVerification || DEV_AUTH.verificationStatus,
-  };
-}
 
 export default function SymptomChecker() {
   const [symptoms, setSymptoms] = useState([]);
@@ -63,15 +50,20 @@ export default function SymptomChecker() {
     setResult(null);
 
     try {
+      // Build headers from shared helper and set user id
+      const headers = getAuthHeaders();
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = storedUser?.id || localStorage.getItem('x-user-id') || DEV_AUTH.userId;
+      headers['x-user-id'] = userId;
+      headers['x-role'] = storedUser?.role || localStorage.getItem('x-role') || DEV_AUTH.role;
+
       // Send symptoms array to backend
       const response = await fetch(`${API_GATEWAY_BASE_URL}/api/prediction/predict`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({
           symptoms: symptoms,
-          userId: DEV_AUTH.userId || "guest-user"
+          userId: userId
         }),
       });
 

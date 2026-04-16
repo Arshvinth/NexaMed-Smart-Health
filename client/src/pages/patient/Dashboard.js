@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 
 import SymptomChecker from "./SymptomChecker";
+import { getAuthHeaders } from "../../utils/userAuth";
 import UploadReports from "./UploadReports";
 import MyReports from "./MyReports";
 import Prescriptions from "./Prescriptions";
@@ -57,11 +58,12 @@ export default function Dashboard() {
         const API_BASE = process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
 
         // Fetch reports count
+        const headers = getAuthHeaders();
+        headers["x-user-id"] = patientId;
+        headers["x-role"] = "PATIENT";
+
         const reportsRes = await fetch(`${API_BASE}/api/medical-reports/${patientId}`, {
-          headers: {
-            "x-user-id": patientId,
-            "x-role": "PATIENT",
-          }
+          headers
         });
         const reportsData = await reportsRes.json();
         setStats(prev => ({ ...prev, totalReports: reportsData.data?.length || 0 }));

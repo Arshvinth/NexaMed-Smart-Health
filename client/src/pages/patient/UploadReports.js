@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
+import { getAuthHeaders } from "../../utils/userAuth";
 
 export default function UploadReports() {
   const [files, setFiles] = useState([]);
@@ -18,19 +19,7 @@ export default function UploadReports() {
     doctorId: ""
   });
 
-  // Helper function to get auth headers for dev mode
-  const getAuthHeaders = () => {
-    const userId = localStorage.getItem('x-user-id') || 'TEST001';
-    const role = localStorage.getItem('x-role') || 'PATIENT';
-    const verificationStatus = localStorage.getItem('x-verification-status') || 'VERIFIED';
-
-    return {
-      'x-user-id': userId,
-      'x-role': role,
-      'x-verification-status': verificationStatus,
-      'Content-Type': 'multipart/form-data'
-    };
-  };
+  // Use shared getAuthHeaders from utils; we'll remove Content-Type for FormData
 
   const onDrop = useCallback((acceptedFiles, rejectedFiles) => {
     if (rejectedFiles && rejectedFiles.length > 0) {
@@ -126,8 +115,9 @@ export default function UploadReports() {
       formDataToSend.append('diagnosis', formData.diagnosis);
       formDataToSend.append('doctorId', formData.doctorId);
 
-      // Use the correct patient ID (MongoDB ObjectId)
-      const patientId = localStorage.getItem('x-user-id') || 'TEST001';
+      // Use the correct patient ID (from stored user if available)
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const patientId = storedUser?.id || localStorage.getItem('x-user-id') || 'TEST001';
       formDataToSend.append('patientId', patientId);
 
       console.log('Uploading with patientId:', patientId);
@@ -142,14 +132,19 @@ export default function UploadReports() {
       // Use API Gateway
       const apiGatewayUrl = `http://localhost:5000/api/medical-reports/upload`;
 
-      // Don't set Content-Type header - let browser set it with boundary
+      // Build headers from shared helper but remove Content-Type for FormData
+      const headers = getAuthHeaders();
+      if (headers["Content-Type"]) delete headers["Content-Type"];
+      // ensure correct patient id and role for this request
+      headers["x-user-id"] = patientId;
+      headers["x-role"] = "PATIENT";
+      headers["x-verification-status"] = "VERIFIED";
+
+      console.log('Upload request headers:', headers);
+
       const response = await fetch(apiGatewayUrl, {
         method: 'POST',
-        headers: {
-          'x-user-id': patientId,
-          'x-role': 'PATIENT',
-          'x-verification-status': 'VERIFIED'
-        },
+        headers,
         body: formDataToSend
       });
 
