@@ -9,7 +9,7 @@ export default function Prescriptions() {
 
   function getAuthHeaders() {
     return {
-      "x-user-id": localStorage.getItem("x-user-id") || "P0001",
+      "x-user-id": localStorage.getItem("x-user-id") || "69d24e28cc9a37224f7e0147",
       "x-role": "PATIENT",
       "x-verification-status": "VERIFIED",
     };
@@ -18,7 +18,7 @@ export default function Prescriptions() {
   const fetchPrescriptions = async () => {
     try {
       setLoading(true);
-      const patientId = localStorage.getItem('x-user-id') || 'P0001';
+      const patientId = localStorage.getItem('x-user-id') || '69d24e28cc9a37224f7e0147';
 
       const response = await fetch(`${API_GATEWAY_BASE_URL}/api/prescriptions/${patientId}`, {
         headers: getAuthHeaders()

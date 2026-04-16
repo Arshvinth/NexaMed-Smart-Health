@@ -8,8 +8,10 @@ export const uploadMedicalReports = async (files, body) => {
         // Upload to Cloudinary
         const result = await uploadToCloudinary(file, 'medical-reports');
 
+        let patient = await Patient.findById(body.patientId);
+
         const medicalReport = new MedicalReport({
-            patientId: body.patientId,
+            patientId: patient._id,
             doctorId: body.doctorId,
             title: body.title,
             description: body.description,

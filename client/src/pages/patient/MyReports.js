@@ -29,7 +29,7 @@ export default function MyReports() {
     const fetchReports = async () => {
         try {
             setLoading(true);
-            const patientId = localStorage.getItem('x-user-id') || 'P0001';
+            const patientId = localStorage.getItem('x-user-id') || '69d24e28cc9a37224f7e0147';
 
             const response = await fetch(`${API_GATEWAY_BASE_URL}/api/medical-reports/${patientId}`, {
                 headers: getAuthHeaders()

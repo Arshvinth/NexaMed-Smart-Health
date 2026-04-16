@@ -15,10 +15,12 @@ services:
       DOCTOR_SERVICE_URL: "http://doctor-service:5002"
       APPOINTMENT_SERVICE_URL: "http://appointment-service:5003"
       TELEMEDICINE_SERVICE_URL: "http://telemedicine-service:5005"
+      PATIENT_SERVICE_URL: "http://patient-service:8081"
     depends_on:
       - doctor-service
       - appointment-service
       - telemedicine-service
+      - patient-service
 
   mongo:
     image: mongo:7
