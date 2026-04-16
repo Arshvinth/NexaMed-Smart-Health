@@ -14,4 +14,5 @@ ENV NODE_ENV=production
 # Patient service listens on 8080 (see docker-compose and k8s manifests)
 EXPOSE 8080
 
-CMD ["node", "server.js"]
+# server entrypoint lives at src/server.js in the project
+CMD ["node", "src/server.js"]

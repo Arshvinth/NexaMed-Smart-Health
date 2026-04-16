@@ -2,10 +2,11 @@
 import { deletePatientProfiles, getAllProfiles, getPatientProfiles, updatePatientProfiles } from "../services/ProfileService.js";
 import logger from "../utils/Logger.js";
 
+
 export const getPatientprofile = async (req, res) => {
     try {
-        const userId = req.user.userId;
-        const PatientProfile = await getPatientProfiles(userId);
+        const { patientid } = req.params;
+        const PatientProfile = await getPatientProfiles(patientid);
         logger.info(`Patient profile with ID ${patientid} fetched successfully`);
         res.status(200).json({ data: PatientProfile });
     } catch (error) {
@@ -14,9 +15,10 @@ export const getPatientprofile = async (req, res) => {
     }
 }
 
+
 export const updatePatientProfile = async (req, res) => {
     try {
-        const userId = req.user.userId;
+        const { userId } = req.params;
         const updateData = req.body;
         const updatedProfile = await updatePatientProfiles(userId, updateData);
         logger.info(`Patient profile with ID ${userId} updated successfully`);
@@ -27,9 +29,10 @@ export const updatePatientProfile = async (req, res) => {
     }
 }
 
+
 export const deletePatientProfile = async (req, res) => {
     try {
-        const userId = req.user.userId;
+        const { userId } = req.params;
         const deletedProfile = await deletePatientProfiles(userId);
         logger.info(`Patient profile with ID ${userId} deleted successfully`);
         res.status(200).json({ data: deletedProfile });
@@ -38,6 +41,7 @@ export const deletePatientProfile = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 }
+
 
 export const getAllPatients = async (req, res) => {
     try {

@@ -102,6 +102,13 @@ services:
     depends_on:
       - mongo
       - appointment-service
+  
+  ai-service:
+    build:
+      context: ../../services/SymtomesChecker-Service
+    container_name: shp-ai-service
+    ports:
+      - "8000:8000"
 
   patient-service:
     build:
@@ -113,7 +120,9 @@ services:
       NODE_ENV: "production"
       MONGO_URI: "${MONGO_URI}"
       CORS_ORIGIN: "http://localhost:3000"
+      AI_SERVICE_URL: "http://ai-service:8000" 
     depends_on:
+      - ai-service
       - mongo
 
   api-gateway:

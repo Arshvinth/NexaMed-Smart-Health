@@ -4,17 +4,17 @@ import logger from "../utils/Logger.js"
 
 
 // Service to get patient profile by ID
-export const getPatientProfiles = async (userId) => {
+export const getPatientProfiles = async (userid) => {
 
-    if (!userId) {
+    if (!userid) {
         logger.error('Patient ID is required to fetch profile');
         throw new Error("Patient Id is Required");
     }
 
-    const patientProfile = await Patient.findOne({ userId });
+    const patientProfile = await Patient.findOne({ userId: userid });
 
     if (!patientProfile) {
-        logger.error(`No patient found with ID: ${userId}`);
+        logger.error(`No patient found with ID: ${userid}`);
         throw new Error("Patient Not Found");
 
     }

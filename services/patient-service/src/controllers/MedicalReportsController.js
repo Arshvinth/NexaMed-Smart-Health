@@ -1,4 +1,4 @@
-import { uploadMedicalReports, getMedicalReportsByPatient, updateMedicalReport } from '../services/MedicalReportsService.js';
+import { uploadMedicalReports, getMedicalReportsByPatient, updateMedicalReport, deletemedicalReport } from '../services/MedicalReportsService.js';
 import logger from '../utils/Logger.js';
 
 export const uploadMedicalReport = async (req, res) => {
@@ -7,7 +7,7 @@ export const uploadMedicalReport = async (req, res) => {
             return res.status(400).json({ message: 'No files uploaded' });
         }
 
-        const uploadedReports = await uploadMedicalReports(req.files, req.body.patientId);
+        const uploadedReports = await uploadMedicalReports(req.files, req.body);
 
         res.status(201).json({
             message: `${uploadedReports.length} medical report(s) uploaded successfully`,
@@ -30,12 +30,23 @@ export const getMedicalReports = async (req, res) => {
     }
 };
 
+export const viewMedicalReportByDoctor = async (req, res) => {
+    try {
+        const { doctorId } = req.doctor?.Id;
+        const reports = await viewMedicalReportByDoctor(doctorId);
+        res.status(200).json({ data: reports });
+    } catch (error) {
+        console.error('Error fetching medical reports:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
 export const updateMedicalReports = async (req, res) => {
     try {
         const { reportId } = req.params;
 
         if (req.files && req.files.length > 0) {
-            const updateReport = await updateMedicalReport(reportId, req.files);
+            const updateReport = await updateMedicalReport(reportId, req.files, req.body);
 
             res.status(200).json({
                 message: "Medical Report Updated Successfully",
@@ -48,3 +59,21 @@ export const updateMedicalReports = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 }
+
+export const deleteMedicalReport = async (req, res) => {
+    try {
+        const { reportId } = req.params;
+
+        const deletedReport = await deletemedicalReport(reportId);
+
+        res.status(200).json({
+            message: "Medical report deleted successfully",
+            data: deletedReport
+        });
+        logger.info(`Medical report with ID ${reportId} deleted successfully`);
+
+    } catch (error) {
+        logger.error(`Error deleting medical report: ${error.message}`);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};

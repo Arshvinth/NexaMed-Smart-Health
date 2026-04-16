@@ -114,7 +114,9 @@ app.use(
   buildProxy(patientServiceUrl, (path) => {
     return (
       path.startsWith("/api/patients") ||
-      path.startsWith("/api/medical-reports")
+      path.startsWith("/api/medical-reports") ||
+      path.startsWith("/api/prescription") ||
+      path.startsWith("/api/prediction")
     );
   }),
 );
