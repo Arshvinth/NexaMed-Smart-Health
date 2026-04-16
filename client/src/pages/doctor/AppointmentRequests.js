@@ -57,6 +57,7 @@ async function parseErrorResponse(response) {
   return `${response.status}: ${message}`;
 }
 
+//List appointments for the logged in doctor
 async function listDoctorAppointments() {
   const response = await fetch(`${API_GATEWAY_BASE_URL}/api/appointments/me`, {
     method: "GET",
