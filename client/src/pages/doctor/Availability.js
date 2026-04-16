@@ -198,8 +198,28 @@ export default function Availability() {
     setSuccess("");
     setError("");
     setDeletingId(slotId);
-
     try {
+      // Find the slot to be deleted so we can check for overlapping appointments
+      const slot = slots.find((s) => s._id === slotId);
+      if (slot) {
+        const slotStart = new Date(slot.startTime).getTime();
+        const slotEnd = new Date(slot.endTime).getTime();
+
+        // Load doctor's appointments and check for any that fall inside this slot
+        const appointments = await listDoctorAppointments();
+        const overlapping = appointments.some((a) => {
+          const apptTime = a.startTime || a.appointmentTime;
+          if (!apptTime) return false;
+          const apptStart = new Date(apptTime).getTime();
+          return apptStart >= slotStart && apptStart < slotEnd;
+        });
+
+        if (overlapping) {
+          setError("This availability slot has appointments scheduled and cannot be removed.");
+          return;
+        }
+      }
+
       const response = await fetch(
         `${API_GATEWAY_BASE_URL}/api/doctors/me/availability/${slotId}`,
         {
@@ -367,4 +387,26 @@ export default function Availability() {
       </div>
     </div>
   );
+}
+
+// list appointments for the logged-in doctor (used to check slot overlap)
+async function listDoctorAppointments() {
+  const response = await fetch(`${API_GATEWAY_BASE_URL}/api/appointments/me`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    let message = "Unable to load appointments.";
+    try {
+      const body = await response.json();
+      message = `${response.status}: ${readErrorMessage(body)}`;
+    } catch (e) {
+      message = `${response.status}: Unable to load appointments.`;
+    }
+    throw new Error(message);
+  }
+
+  const data = await response.json();
+  return Array.isArray(data) ? data : [];
 }
