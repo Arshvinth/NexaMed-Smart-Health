@@ -389,7 +389,7 @@ export default function Availability() {
   );
 }
 
-// list appointments for the logged-in doctor (used to check slot overlap)
+// list appointments for the logged-in doctor - used to check slot overlap
 async function listDoctorAppointments() {
   const response = await fetch(`${API_GATEWAY_BASE_URL}/api/appointments/me`, {
     method: "GET",
