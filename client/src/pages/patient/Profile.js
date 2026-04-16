@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getAuthHeaders } from "../../utils/userAuth";
 
 export default function Profile() {
   const [profile, setProfile] = useState(null);
@@ -9,14 +10,7 @@ export default function Profile() {
 
   const API_GATEWAY_BASE_URL = process.env.REACT_APP_API_GATEWAY_URL || "http://localhost:5000";
 
-  function getAuthHeaders() {
-    return {
-      "Content-Type": "application/json",
-      "x-user-id": localStorage.getItem("x-user-id") || "P0001",
-      "x-role": "PATIENT",
-      "x-verification-status": "VERIFIED",
-    };
-  }
+  // use shared helper to ensure headers match other client requests
 
   const [formData, setFormData] = useState({
     birthDay: "",
@@ -29,7 +23,8 @@ export default function Profile() {
 
   const fetchProfile = async () => {
     try {
-      const userId = localStorage.getItem('x-user-id') || 'TEST001';
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = storedUser?.id || localStorage.getItem('x-user-id') || 'TEST001';
       const response = await fetch(`${API_GATEWAY_BASE_URL}/api/patients/profile/${userId}`, {
         headers: getAuthHeaders()
       });
@@ -67,7 +62,8 @@ export default function Profile() {
     setSuccess(null);
 
     try {
-      const userId = localStorage.getItem('x-user-id') || 'P0001';
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const userId = storedUser?.id || localStorage.getItem('x-user-id') || 'P0001';
       const response = await fetch(`${API_GATEWAY_BASE_URL}/api/patients/profile/${userId}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
