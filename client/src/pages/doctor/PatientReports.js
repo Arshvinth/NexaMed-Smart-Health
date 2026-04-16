@@ -340,6 +340,10 @@ export default function PatientReports() {
                     {selectedPatient.profile.address?.city || "-"},{" "}
                     {selectedPatient.profile.address?.country || "-"}
                   </div>
+                 <div>
+                    <span className="font-semibold">Medical History:</span>{" "}
+                    {selectedPatient.profile.medicalHistory?.join(",  ") || "N/A"}
+                  </div>
                 </div>
               ) : (
                 <p className="text-xs text-slate-500">
