@@ -105,9 +105,27 @@ async function completeAppointment(appointmentId) {
   return response.json();
 }
 
+// Fetch a user profile from user-service (returns top-level user or wrapped `data`)
+async function fetchUserProfile(userId) {
+  const url = `${API_GATEWAY_BASE_URL}/api/auth/users/${userId}`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    data = text;
+  }
+  return data?.data ?? data ?? {};
+}
+
 export default function AppointmentRequests() {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
+  const [userProfiles, setUserProfiles] = useState({});
   const [activeFilter, setActiveFilter] = useState("pending");
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState("");
@@ -130,6 +148,30 @@ export default function AppointmentRequests() {
   useEffect(() => {
     load();
   }, []);
+
+  // Fetch missing user profiles for appointments to show full names
+  useEffect(() => {
+    const missing = Array.from(
+      new Set(appointments.map((a) => a.patientUserId).filter(Boolean)),
+    ).filter((id) => !userProfiles[id]);
+    if (missing.length === 0) return;
+
+    Promise.all(
+      missing.map((id) =>
+        fetchUserProfile(id)
+          .then((profile) => ({ id, profile }))
+          .catch(() => ({ id, profile: null })),
+      ),
+    ).then((results) => {
+      setUserProfiles((prev) => {
+        const updated = { ...prev };
+        results.forEach(({ id, profile }) => {
+          updated[id] = profile;
+        });
+        return updated;
+      });
+    });
+  }, [appointments, userProfiles]);
 
   const visibleRows = useMemo(() => {
     if (activeFilter === "ALL") return appointments;
@@ -284,7 +326,7 @@ export default function AppointmentRequests() {
 
                       <div className="flex-1 p-5">
                         <div className="grid grid-cols-1 gap-y-4 sm:grid-cols-2 md:grid-cols-3">
-                          <InfoBlock label="Patient ID" value={appt.patientUserId} />
+                          <InfoBlock label="Patient" value={userProfiles[appt.patientUserId]?.fullName || appt.patientUserId} />
                           <InfoBlock label="Queue Number" value={appt.queueNumber ?? "N/A"} />
                           <InfoBlock
                             label="Payment Amount"
