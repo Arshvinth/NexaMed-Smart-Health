@@ -42,6 +42,7 @@ async function fetchAllPatients() {
 async function fetchMedicalReports(patientId) {
   const res = await fetch(
     `${API_GATEWAY_BASE_URL}/api/medical-reports/${patientId}`,
+    { headers: getAuthHeaders() },
   );
 
   if (!res.ok) {
@@ -426,22 +427,28 @@ export default function PatientReports() {
                     {reports.map((r) => (
                       <li
                         key={r._id}
-                        className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5"
+                        className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
                       >
-                        <div className="truncate">
+                        <div className="flex-1 min-w-0">
                           <a
                             href={r.file?.url}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-sky-700 hover:underline truncate"
+                            className="text-sky-700 hover:underline font-semibold block truncate"
                           >
-                            {r.file?.url || "Open report"}
+                            {r.title || r.file?.url || "Open report"}
                           </a>
+                          <div className="text-xs text-slate-500 mt-0.5">
+                            {r.reportType && (
+                              <div className="truncate">{r.reportType}</div>
+                            )}
+                            {r.diagnosis && (
+                              <div className="truncate">Diagnosis: {r.diagnosis}</div>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-[11px] text-slate-500 whitespace-nowrap">
-                          {r.uploadedAt
-                            ? new Date(r.uploadedAt).toLocaleString()
-                            : ""}
+                        <div className="text-[11px] text-slate-500 whitespace-nowrap ml-3">
+                          {r.uploadedAt ? new Date(r.uploadedAt).toLocaleString() : ""}
                         </div>
                       </li>
                     ))}
