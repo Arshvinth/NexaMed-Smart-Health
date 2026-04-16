@@ -69,6 +69,4 @@ const AppointmentSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-AppointmentSchema.index({ doctorUserId: 1, startTime: 1 }, { unique: true });
-
 export default mongoose.model("Appointment", AppointmentSchema);

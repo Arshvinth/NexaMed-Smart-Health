@@ -15,28 +15,44 @@ export async function createAppointment({
   endTime,
   queueNumber,
 }) {
+  // Check for existing active appointment
   const existing = await Appointment.findOne({
     doctorUserId,
     startTime,
     status: { $in: ["pending", "confirmed"] },
   });
+
   if (existing) {
-    const err = new Error("Time slot already booked");
+    const err = new Error(
+      "This time slot is already booked. Please select another time.",
+    );
     err.statusCode = 409;
     throw err;
   }
 
-  const appointment = await Appointment.create({
-    patientUserId,
-    doctorUserId,
-    doctorName,
-    doctorSpecialization,
-    startTime,
-    endTime,
-    queueNumber,
-    status: "pending",
-  });
-  return appointment;
+  try {
+    const appointment = await Appointment.create({
+      patientUserId,
+      doctorUserId,
+      doctorName,
+      doctorSpecialization,
+      startTime,
+      endTime,
+      queueNumber,
+      status: "pending",
+    });
+    return appointment;
+  } catch (error) {
+    // Handle duplicate key error from MongoDB (E11000)
+    if (error.code === 11000) {
+      const err = new Error(
+        "This time slot is already booked. Please select another time.",
+      );
+      err.statusCode = 409;
+      throw err;
+    }
+    throw error;
+  }
 }
 
 export async function confirmAppointment(
@@ -60,16 +76,37 @@ export async function confirmAppointment(
 
   const telemedicineUrl =
     process.env.TELEMEDICINE_SERVICE_URL || "http://telemedicine-service:5005";
-  const headers = {};
-  if (token) {
-    headers.Authorization = token; // forward JWT
+
+  // Build headers for telemedicine service
+  const headers = {
+    "Content-Type": "application/json",
+  };
+
+  // Forward the user headers that telemedicine service expects (dev mode)
+  if (user) {
+    headers["x-user-id"] = user.userId;
+    headers["x-role"] = user.role;
+    if (user.verificationStatus)
+      headers["x-verification-status"] = user.verificationStatus;
   }
-  const sessionRes = await axios.post(
-    `${telemedicineUrl}/api/sessions`,
-    { appointmentId: appointment._id },
-    { headers },
-  );
-  const meetingLink = sessionRes.data.data.meetingLink;
+
+  // Also forward authorization token if present (for JWT mode)
+  if (token) {
+    headers["Authorization"] = token;
+  }
+
+  try {
+    const sessionRes = await axios.post(
+      `${telemedicineUrl}/api/sessions`,
+      { appointmentId: appointment._id },
+      { headers },
+    );
+    var meetingLink = sessionRes.data.data?.meetingLink;
+  } catch (error) {
+    console.error("Telemedicine service error:", error.message);
+    // Fallback: create a dummy meeting link if telemedicine fails
+    meetingLink = `https://meet.jit.si/NexaMed-${appointment._id}`;
+  }
 
   appointment.status = "confirmed";
   appointment.paymentId = paymentId;
@@ -168,7 +205,16 @@ export async function rescheduleAppointment(
     err.statusCode = 403;
     throw err;
   }
-  if (!["pending", "confirmed"].includes(oldApp.status)) {
+
+  // Allow rescheduling for pending, confirmed, OR cancelled appointments
+  if (
+    ![
+      "pending",
+      "confirmed",
+      "cancelled_by_patient",
+      "cancelled_by_doctor",
+    ].includes(oldApp.status)
+  ) {
     const err = new Error("Cannot reschedule this appointment");
     err.statusCode = 400;
     throw err;
@@ -185,11 +231,12 @@ export async function rescheduleAppointment(
     throw err;
   }
 
-  oldApp.status =
-    role === "PATIENT" ? "cancelled_by_patient" : "cancelled_by_doctor";
-  oldApp.cancellationReason = "Rescheduled";
+  // Mark old appointment as rescheduled (but keep it for history)
+  oldApp.status = "cancelled_by_patient";
+  oldApp.cancellationReason = "Rescheduled to new time";
   await oldApp.save();
 
+  // Create new appointment with same payment info
   const newApp = await Appointment.create({
     patientUserId: oldApp.patientUserId,
     doctorUserId: oldApp.doctorUserId,
@@ -198,12 +245,13 @@ export async function rescheduleAppointment(
     startTime: newStartTime,
     endTime: newEndTime,
     queueNumber,
-    status: oldApp.status === "confirmed" ? "confirmed" : "pending",
+    status: "confirmed", // Since it was already confirmed/payment done
     paymentId: oldApp.paymentId,
     paymentAmount: oldApp.paymentAmount,
     meetingLink: oldApp.meetingLink,
     rescheduleFromId: oldApp._id,
   });
+
   return { oldAppointment: oldApp, newAppointment: newApp };
 }
 

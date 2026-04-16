@@ -87,3 +87,7 @@ export async function confirmPayment(paymentIntentId) {
 export async function getPaymentById(paymentId) {
   return Payment.findById(paymentId);
 }
+
+export async function getPaymentByAppointmentId(appointmentId) {
+  return Payment.findOne({ appointmentId });
+}
