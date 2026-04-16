@@ -8,6 +8,7 @@ import {
   rescheduleAppointment,
   getUserAppointments,
   getAppointmentById,
+  getAdminAppointmentFeed,
 } from "../services/appointmentService.js";
 import { emitAppointmentUpdate } from "../services/socketService.js";
 
@@ -151,4 +152,16 @@ export async function getAppointment(req, res) {
     return res.status(404).json({ message: "Appointment not found" });
   }
   res.json(appointment);
+}
+
+export async function getAdminFeed(req, res) {
+  const { fromDate, toDate, limit = 20 } = req.query;
+
+  const result = await getAdminAppointmentFeed({
+    fromDate,
+    toDate,
+    limit: Number(limit),
+  });
+
+  res.json(result);
 }

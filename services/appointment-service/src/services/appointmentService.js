@@ -226,3 +226,37 @@ export async function getAppointmentById(appointmentId, userId, role) {
   if (role === "DOCTOR" && appointment.doctorUserId !== userId) return null;
   return appointment;
 }
+
+export async function getAdminAppointmentFeed({
+  fromDate,
+  toDate,
+  limit = 20,
+}) {
+  const query = {};
+
+  if (fromDate || toDate) {
+    query.createdAt = {};
+    if (fromDate) query.createdAt.$gte = new Date(fromDate);
+    if (toDate) query.createdAt.$lte = new Date(toDate);
+  }
+
+  const [items, newAppointments, completedAppointments, cancelledAppointments] =
+    await Promise.all([
+      Appointment.find(query).sort({ createdAt: -1 }).limit(limit),
+      Appointment.countDocuments(query),
+      Appointment.countDocuments({ ...query, status: "completed" }),
+      Appointment.countDocuments({
+        ...query,
+        status: { $in: ["cancelled_by_patient", "cancelled_by_doctor"] },
+      }),
+    ]);
+
+  return {
+    items,
+    metrics: {
+      newAppointments,
+      completedAppointments,
+      cancelledAppointments,
+    },
+  };
+}
