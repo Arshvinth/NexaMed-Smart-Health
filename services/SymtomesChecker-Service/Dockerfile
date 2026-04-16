@@ -1,8 +1,25 @@
-FROM node:20-alpine
+FROM python:3.10
+
 WORKDIR /app
-COPY package*.json ./
-RUN npm install --omit=dev
+
+# ✅ Install required system dependencies (FIXED)
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    gcc \
+    g++ \
+    python3-dev \
+    libopenblas-dev \
+    liblapack-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+
+RUN pip install --upgrade pip
+
+RUN pip install --no-cache-dir -r requirements.txt
+
 COPY . .
-ENV NODE_ENV=production
+
 EXPOSE 8080
-CMD ["node", "src/server.js"]
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

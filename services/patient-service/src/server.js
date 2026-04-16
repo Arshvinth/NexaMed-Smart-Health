@@ -7,12 +7,12 @@ import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import multer from "multer";
-import connectDB from "./src/config/db.js";
-import logger from "./src/utils/Logger.js";
-import medicalReportsRouter from "./src/route/medicalReports.js";
-import prescriptionsRouter from "./src/route/prescriptions.js";
-import profileRouter from "./src/route/profileRoute.js";
-import predictRoute from "./src/route/predictRoute.js";
+import connectDB from "./config/db.js";
+import logger from "./utils/Logger.js";
+import medicalReportsRouter from "./route/medicalReports.js";
+import prescriptionsRouter from "./route/prescriptions.js";
+import profileRouter from "./route/profileRoute.js";
+import predictRoute from "./route/predictRoute.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

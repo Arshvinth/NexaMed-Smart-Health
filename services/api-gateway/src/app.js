@@ -11,7 +11,7 @@ const doctorServiceUrl = process.env.DOCTOR_SERVICE_URL || "http://localhost:500
 const telemedicineServiceUrl = process.env.TELEMEDICINE_SERVICE_URL || "http://localhost:5005";
 const appointmentServiceUrl =
     process.env.APPOINTMENT_SERVICE_URL || "http://localhost:5003";
-const patientServiceUrl = process.env.PATIENT_SERVICE_URL || "http://localhost:5006";
+const patientServiceUrl = process.env.PATIENT_SERVICE_URL || "http://localhost:8081";
 const corsOrigin = process.env.CORS_ORIGIN || "http://localhost:3000";
 
 
@@ -84,7 +84,7 @@ app.use(
 
 app.use(
     buildProxy(patientServiceUrl, (path) => {
-        return path.startsWith("/api/patient") || path.startsWith("/api/prescriptions") || path.startsWith("/api/medical-reports");
+        return path.startsWith("/api/patient") || path.startsWith("/api/prescriptions") || path.startsWith("/api/medical-reports") || path.startsWith("/api/prediction");
     })
 );
 
