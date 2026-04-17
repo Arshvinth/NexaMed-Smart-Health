@@ -18,7 +18,7 @@ services:
     environment:
       PORT: "5001"
       NODE_ENV: "production"
-      MONGODB_URI: "${MONGODB_URI}"
+      MONGODB_URI: "${MONGODB_URI:-mongodb://mongo:27017/user_service}"
       #MONGODB_URI: "${MONGODB_URI:-mongodb://mongo:27017/user_service}"
       # MONGODB_URI: "mongodb://mongo:27017/nexamed_users"
       JWT_SECRET: "${JWT_SECRET}"
@@ -41,7 +41,7 @@ services:
       NODE_ENV: "production"
       AUTH_MODE: "jwt"
       JWT_SECRET: "${JWT_SECRET}"
-      MONGODB_URI: "${MONGODB_URI}"
+      MONGODB_URI: "${MONGODB_URI:-mongodb://mongo:27017/doctor_service}"
       # MONGODB_URI: "${MONGODB_URI:-mongodb://mongo:27017/doctor_service}"
       # MONGODB_URI: "mongodb://mongo:27017/doctor_service"
       CORS_ORIGIN: "http://localhost:3000"
@@ -59,7 +59,7 @@ services:
       NODE_ENV: "production"
       AUTH_MODE: "jwt"
       JWT_SECRET: "${JWT_SECRET}"
-      MONGODB_URI: "${MONGODB_URI}"
+      MONGODB_URI: "${MONGODB_URI:-mongodb://mongo:27017/appointment_service}"
       # MONGODB_URI: "${APPOINTMENT_MONGODB_URI:-mongodb://mongo:27017/appointment_service}"
       CORS_ORIGIN: "http://localhost:3000"
       DOCTOR_SERVICE_URL: "http://doctor-service:5002"
@@ -90,7 +90,7 @@ services:
     environment:
       PORT: "5004"
       NODE_ENV: "production"
-      MONGODB_URI: "${MONGODB_URI}"
+      MONGODB_URI: "${MONGODB_URI:-mongodb://mongo:27017/payment_service}"
       # MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/payment_service}
       CORS_ORIGIN: "http://localhost:3000"
       APPOINTMENT_SERVICE_URL: "http://appointment-service:5003"

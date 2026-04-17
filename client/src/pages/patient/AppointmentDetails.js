@@ -13,7 +13,16 @@ export default function AppointmentDetails({
 
   const handleCreate = async () => {
     if (!selectedSlot) {
-      toast.error("No time slot selected");
+      toast.error("No time slot selected", {
+        duration: 4000,
+        style: {
+          background: "#fef2f2",
+          color: "#dc2626",
+          border: "1px solid #fecaca",
+          padding: "12px",
+          borderRadius: "12px",
+        },
+      });
       return;
     }
 
@@ -39,11 +48,29 @@ export default function AppointmentDetails({
           paymentAmount: doctor.fee,
           doctorFee: doctor.fee,
         };
-        toast.success("Appointment created! Proceed to payment.");
+        toast.success("Appointment created! Proceeding to payment...", {
+          duration: 4000,
+          style: {
+            background: "#f0fdf4",
+            color: "#16a34a",
+            border: "1px solid #bbf7d0",
+            padding: "12px",
+            borderRadius: "12px",
+          },
+        });
         onConfirm(appointmentWithFee);
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Booking failed");
+      toast.error(err.response?.data?.message || "Booking failed", {
+        duration: 4000,
+        style: {
+          background: "#fef2f2",
+          color: "#dc2626",
+          border: "1px solid #fecaca",
+          padding: "12px",
+          borderRadius: "12px",
+        },
+      });
     } finally {
       setCreating(false);
     }
@@ -54,7 +81,7 @@ export default function AppointmentDetails({
     return new Date(dateStr).toLocaleDateString(undefined, {
       weekday: "short",
       year: "numeric",
-      month: "short",
+      month: "long",
       day: "numeric",
     });
   };
@@ -69,75 +96,312 @@ export default function AppointmentDetails({
 
   if (!selectedSlot) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 text-center">
-        <p className="text-slate-500">
-          No time slot selected. Please go back and select a time slot.
+      <div className="bg-neutral-50 rounded-2xl shadow-soft border border-neutral-200 p-8 text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 mb-4">
+          <svg
+            className="w-8 h-8 text-amber-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+        </div>
+        <p className="text-neutral-700 font-medium">No time slot selected</p>
+        <p className="text-neutral-500 text-sm mt-1">
+          Please go back and select a time slot
         </p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-      <div className="p-6">
-        <h3 className="text-xl font-bold text-slate-800 mb-4">
+    <div className="bg-neutral-50 rounded-2xl shadow-soft border border-neutral-200 overflow-hidden">
+      {/* Header with gradient */}
+      <div className="bg-gradient-to-r from-primary-100 to-secondary-100 px-6 py-5 border-b border-neutral-200">
+        <h3 className="text-xl font-display font-bold bg-gradient-to-r from-primary-700 to-secondary-700 bg-clip-text text-transparent">
           {isReschedule ? "Reschedule Appointment" : "Appointment Details"}
         </h3>
+        <p className="text-neutral-600 text-sm mt-1">
+          Please review your appointment information below
+        </p>
+      </div>
 
-        <div className="space-y-3 divide-y divide-slate-100">
-          <div className="flex justify-between py-2">
-            <span className="text-slate-500">Doctor</span>
-            <span className="font-medium text-slate-800">
+      {/* Details Grid */}
+      <div className="p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Doctor Info */}
+          <div className="bg-white rounded-xl p-4 border border-neutral-200 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <svg
+                className="w-4 h-4 text-blue-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+              <span className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">
+                Doctor
+              </span>
+            </div>
+            <p className="font-semibold text-neutral-900 text-base">
               {doctor?.fullName || "N/A"}
-            </span>
+            </p>
           </div>
-          <div className="flex justify-between py-2">
-            <span className="text-slate-500">Speciality</span>
-            <span className="font-medium text-slate-800">
+
+          {/* Specialty */}
+          <div className="bg-white rounded-xl p-4 border border-neutral-200 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <svg
+                className="w-4 h-4 text-purple-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
+                />
+              </svg>
+              <span className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">
+                Specialty
+              </span>
+            </div>
+            <p className="font-semibold text-neutral-900 text-base">
               {doctor?.specialization || "N/A"}
-            </span>
+            </p>
           </div>
-          <div className="flex justify-between py-2">
-            <span className="text-slate-500">Date</span>
-            <span className="font-medium text-slate-800">
+
+          {/* Date */}
+          <div className="bg-white rounded-xl p-4 border border-neutral-200 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <svg
+                className="w-4 h-4 text-emerald-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              <span className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">
+                Date
+              </span>
+            </div>
+            <p className="font-semibold text-neutral-900 text-base">
               {formatDate(selectedSlot.startTime)}
-            </span>
+            </p>
           </div>
-          <div className="flex justify-between py-2">
-            <span className="text-slate-500">Start Time</span>
-            <span className="font-medium text-slate-800">
-              {formatTime(selectedSlot.startTime)}
-            </span>
-          </div>
-          <div className="flex justify-between py-2">
-            <span className="text-slate-500">End Time</span>
-            <span className="font-medium text-slate-800">
-              {formatTime(selectedSlot.endTime)}
-            </span>
-          </div>
-          <div className="flex justify-between py-2">
-            <span className="text-slate-500">Queue No.</span>
-            <span className="font-mono font-bold text-slate-800">
+
+          {/* Queue No */}
+          <div className="bg-white rounded-xl p-4 border border-neutral-200 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <svg
+                className="w-4 h-4 text-orange-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                />
+              </svg>
+              <span className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">
+                Queue No.
+              </span>
+            </div>
+            <p className="font-mono font-bold text-primary-700 text-xl">
               #{selectedSlot.queueNumber}
-            </span>
+            </p>
           </div>
-          <div className="flex justify-between py-2">
-            <span className="text-slate-500">Fees</span>
-            <span className="font-bold text-slate-800">
-              ${doctor?.fee || 0}
-            </span>
+
+          {/* Start Time */}
+          <div className="bg-white rounded-xl p-4 border border-neutral-200 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <svg
+                className="w-4 h-4 text-green-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">
+                Start Time
+              </span>
+            </div>
+            <p className="font-semibold text-neutral-900 text-base">
+              {formatTime(selectedSlot.startTime)}
+            </p>
+          </div>
+
+          {/* End Time */}
+          <div className="bg-white rounded-xl p-4 border border-neutral-200 shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <svg
+                className="w-4 h-4 text-red-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">
+                End Time
+              </span>
+            </div>
+            <p className="font-semibold text-neutral-900 text-base">
+              {formatTime(selectedSlot.endTime)}
+            </p>
+          </div>
+
+          {/* Fees - Light Yellow Box with conditional message for reschedule */}
+          <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-5 md:col-span-2 border border-amber-200 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <svg
+                    className="w-5 h-5 text-amber-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span className="text-xs font-semibold text-amber-700 uppercase tracking-wide">
+                    Total Fees
+                  </span>
+                </div>
+                {isReschedule ? (
+                  <p className="font-bold text-amber-700 text-2xl">$0</p>
+                ) : (
+                  <p className="font-bold text-amber-700 text-3xl">
+                    ${doctor?.fee || 0}
+                  </p>
+                )}
+              </div>
+              <div className="text-right">
+                {isReschedule ? (
+                  <>
+                    <div className="flex items-center gap-1 text-xs text-green-600 font-medium">
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <span>No need to pay</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-amber-600 font-medium mt-1">
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        />
+                      </svg>
+                      <span>Already paid for cancelled appointment</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-1 text-xs text-amber-600 font-medium">
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <span>Including all taxes</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-amber-600 font-medium mt-1">
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                        />
+                      </svg>
+                      <span>Secure payment</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+      {/* Action Button */}
+      <div className="px-6 py-5 bg-neutral-100 border-t border-neutral-200 flex justify-end">
         <button
           onClick={handleCreate}
           disabled={creating}
-          className={`px-6 py-2.5 text-white rounded-xl font-medium transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
+          className={`group px-8 py-3 rounded-xl font-semibold transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
             isReschedule
-              ? "bg-orange-500 hover:bg-orange-600"
-              : "bg-gradient-to-r from-secondary-500 to-secondary-600 hover:from-secondary-600 hover:to-secondary-700"
+              ? "bg-gradient-to-r from-warning-500 to-orange-600 hover:from-warning-600 hover:to-orange-700 text-white"
+              : "bg-gradient-to-r from-secondary-600 to-secondary-700 hover:from-secondary-700 hover:to-secondary-800 text-white"
           }`}
         >
           {creating ? (

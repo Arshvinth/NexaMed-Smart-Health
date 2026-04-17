@@ -179,32 +179,73 @@ export default function TimeSlots({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-slate-800">Time Slots</h2>
-        <p className="text-sm text-slate-500 mt-1">
-          {getDoctorDisplayName()} · {formatDate(selectedBlock?.startTime)}
-        </p>
+        <h2 className="text-2xl font-display font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
+          Time Slots
+        </h2>
+        <div className="flex items-center gap-2 mt-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-primary-500"></div>
+          <p className="text-neutral-600 font-medium">
+            {getDoctorDisplayName()} · {formatDate(selectedBlock?.startTime)}
+          </p>
+        </div>
         {isReschedule && (
-          <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-xs">
-            <span>🔄</span> Reschedule mode – select a new time slot
+          <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-warning-50 text-warning-700 rounded-full text-xs font-medium border border-warning-200">
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            <span>Reschedule mode – select a new time slot</span>
           </div>
         )}
       </div>
 
       {loading && (
-        <div className="flex justify-center py-12">
-          <div className="animate-pulse text-primary-500">
-            Loading time slots...
+        <div className="flex flex-col justify-center items-center py-16">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600"></div>
           </div>
+          <p className="text-transit-muted mt-4 text-sm animate-pulse">
+            Loading available time slots...
+          </p>
         </div>
       )}
 
       {!loading && paginatedSlots.length === 0 && (
-        <div className="text-center py-12 text-slate-500 bg-slate-50 rounded-2xl">
-          No 15‑minute slots available in the selected time block.
+        <div className="text-center py-16 bg-gradient-to-b from-neutral-50 to-white rounded-2xl border border-neutral-100">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-neutral-100 mb-4">
+            <svg
+              className="h-8 w-8 text-neutral-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <p className="text-neutral-500 text-lg font-medium">
+            No time slots available
+          </p>
+          <p className="text-neutral-400 text-sm mt-1">
+            No 15‑minute slots available in the selected time block.
+          </p>
         </div>
       )}
 
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         {paginatedSlots.map((slot, index) => (
           <button
             key={`${slot.startTime}-${slot.queueNumber || index}`}
@@ -218,58 +259,93 @@ export default function TimeSlots({
               }
             }}
             disabled={!slot.available}
-            className={`p-4 rounded-xl border transition-all text-left ${
+            className={`group relative p-5 rounded-2xl transition-all duration-300 text-left overflow-hidden ${
               slot.available
-                ? "bg-white border-slate-200 hover:border-primary-400 hover:shadow-md hover:shadow-primary-100 cursor-pointer hover:-translate-y-0.5"
-                : "bg-slate-100 border-slate-200 opacity-70 cursor-not-allowed"
+                ? "bg-white border border-neutral-100 shadow-soft hover:shadow-xl hover:-translate-y-1 hover:border-primary-200 cursor-pointer"
+                : "bg-neutral-50 border border-neutral-200 opacity-60 cursor-not-allowed"
             }`}
           >
-            <div className="flex justify-between items-start">
-              <div>
-                <div className="font-mono font-bold text-slate-700 text-lg">
-                  Queue #{slot.queueNumber}
+            {/* Decorative gradient for available slots on hover */}
+            {slot.available && (
+              <div className="absolute inset-0 bg-gradient-to-r from-primary-50/0 via-primary-50/0 to-primary-50/0 group-hover:from-primary-50/20 group-hover:via-primary-50/10 group-hover:to-transparent transition-all duration-500"></div>
+            )}
+
+            <div className="relative z-10">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  {/* Queue Number */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center">
+                      <span className="text-primary-700 font-bold text-sm">
+                        #{slot.queueNumber}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Time Range */}
+                  <div className="flex items-center gap-2 mt-3">
+                    <svg
+                      className="w-4 h-4 text-secondary-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <p className="font-semibold text-neutral-800 text-base">
+                      {formatTime(slot.startTime)} – {formatTime(slot.endTime)}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-sm text-slate-600 mt-1">
-                  {formatTime(slot.startTime)} – {formatTime(slot.endTime)}
+
+                {/* Status with colored dot only */}
+                {slot.available ? (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm"></div>
+                    <span className="text-xs font-semibold text-emerald-700">
+                      Available
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-50">
+                    <div className="w-2 h-2 rounded-full bg-rose-500 shadow-sm"></div>
+                    <span className="text-xs font-semibold text-rose-700">
+                      Booked
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Select indicator for available slots on hover */}
+              {slot.available && (
+                <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <div className="flex items-center justify-end gap-1 text-xs font-medium text-primary-600">
+                    <span>Select this slot</span>
+                    <svg
+                      className="w-3 h-3 group-hover:translate-x-0.5 transition-transform"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </div>
                 </div>
-              </div>
-              <div
-                className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                  slot.available
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-red-100 text-red-700"
-                }`}
-              >
-                {slot.available ? "Available" : "Booked"}
-              </div>
+              )}
             </div>
           </button>
         ))}
       </div>
-
-      {totalPages > 1 && (
-        <div className="flex justify-between items-center pt-4 border-t border-slate-200">
-          <span className="text-xs text-slate-500">
-            Page {currentPage} of {totalPages}
-          </span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition"
-            >
-              ← Previous
-            </button>
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition"
-            >
-              Next →
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
