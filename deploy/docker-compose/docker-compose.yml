@@ -18,9 +18,7 @@ services:
     environment:
       PORT: "5001"
       NODE_ENV: "production"
-      MONGODB_URI: "${MONGODB_URI:-mongodb://mongo:27017/user_service}"
-      #MONGODB_URI: "${MONGODB_URI:-mongodb://mongo:27017/user_service}"
-      # MONGODB_URI: "mongodb://mongo:27017/nexamed_users"
+      MONGODB_URI: "${GLOBAL_MONGODB_URI:-${USER_MONGODB_URI:-mongodb://mongo:27017/user_service}}"
       JWT_SECRET: "${JWT_SECRET}"
       JWT_EXPIRES_IN: "7d"
       CORS_ORIGIN: "http://localhost:3000"
@@ -41,9 +39,7 @@ services:
       NODE_ENV: "production"
       AUTH_MODE: "jwt"
       JWT_SECRET: "${JWT_SECRET}"
-      MONGODB_URI: "${MONGODB_URI:-mongodb://mongo:27017/doctor_service}"
-      # MONGODB_URI: "${MONGODB_URI:-mongodb://mongo:27017/doctor_service}"
-      # MONGODB_URI: "mongodb://mongo:27017/doctor_service"
+      MONGODB_URI: "${GLOBAL_MONGODB_URI:-${DOCTOR_MONGODB_URI:-mongodb://mongo:27017/doctor_service}}"
       CORS_ORIGIN: "http://localhost:3000"
     depends_on:
       - mongo
@@ -59,8 +55,7 @@ services:
       NODE_ENV: "production"
       AUTH_MODE: "jwt"
       JWT_SECRET: "${JWT_SECRET}"
-      MONGODB_URI: "${MONGODB_URI:-mongodb://mongo:27017/appointment_service}"
-      # MONGODB_URI: "${APPOINTMENT_MONGODB_URI:-mongodb://mongo:27017/appointment_service}"
+      MONGODB_URI: "${GLOBAL_MONGODB_URI:-${APPOINTMENT_MONGODB_URI:-mongodb://mongo:27017/appointment_service}}"
       CORS_ORIGIN: "http://localhost:3000"
       DOCTOR_SERVICE_URL: "http://doctor-service:5002"
       TELEMEDICINE_SERVICE_URL: "http://telemedicine-service:5005"
@@ -90,8 +85,7 @@ services:
     environment:
       PORT: "5004"
       NODE_ENV: "production"
-      MONGODB_URI: "${MONGODB_URI:-mongodb://mongo:27017/payment_service}"
-      # MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/payment_service}
+      MONGODB_URI: "${GLOBAL_MONGODB_URI:-${PAYMENT_MONGODB_URI:-mongodb://mongo:27017/payment_service}}"
       CORS_ORIGIN: "http://localhost:3000"
       APPOINTMENT_SERVICE_URL: "http://appointment-service:5003"
       JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_here}
@@ -118,7 +112,7 @@ services:
     environment:
       PORT: "8080"
       NODE_ENV: "production"
-      MONGO_URI: "${MONGO_URI}"
+      MONGODB_URI: "${GLOBAL_MONGODB_URI:-${PATIENT_MONGODB_URI:-mongodb://mongo:27017/patient_service}}"
       CORS_ORIGIN: "http://localhost:3000"
       AI_SERVICE_URL: "http://ai-service:8000" 
     depends_on:
