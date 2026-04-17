@@ -155,11 +155,6 @@ export default function Login() {
                 </Link>
               </div>
             </form>
-
-            <div className="mt-4 text-xs text-slate-500">
-              JWT is stored in localStorage for now. Later: connect fully to the
-              Auth microservice (refresh tokens, httpOnly cookies, etc.).
-            </div>
           </div>
         </div>
       </div>
