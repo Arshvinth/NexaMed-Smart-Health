@@ -6,7 +6,6 @@ export const patientNav = [
   { label: "Upload Reports", to: "/patient/reports/upload" },
   { label: "Prescriptions", to: "/patient/prescriptions" },
   { label: "Video Consultation", to: "/patient/video" },
-  { label: "Payments", to: "/patient/payments" },
   { label: "Symptom Checker (AI)", to: "/patient/symptom-checker" },
 ];
 
