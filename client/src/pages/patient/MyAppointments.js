@@ -7,12 +7,18 @@ import { useNavigate } from "react-router-dom";
 
 export default function MyAppointments() {
   const [appointments, setAppointments] = useState([]);
+  const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 2;
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const { lastEvent } = useWebSocket(user.userId);
   const navigate = useNavigate();
+
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
 
   // Cancel modal state
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -62,12 +68,74 @@ export default function MyAppointments() {
       });
 
       setAppointments(sorted);
+      setFilteredAppointments(sorted);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to load appointments");
+      toast.error("Failed to load appointments", {
+        duration: 4000,
+        style: {
+          background: "#fef2f2",
+          color: "#dc2626",
+          border: "1px solid #fecaca",
+          padding: "12px",
+          borderRadius: "12px",
+        },
+      });
     } finally {
       setLoading(false);
     }
+  };
+
+  // Check if appointment is a rescheduled appointment (new one created from reschedule)
+  const isRescheduledAppointment = (apt) => {
+    return apt.rescheduleFromId;
+  };
+
+  // Apply filters and search
+  useEffect(() => {
+    let filtered = [...appointments];
+
+    // Search by doctor name
+    if (searchTerm) {
+      filtered = filtered.filter((apt) =>
+        apt.doctorName?.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
+    }
+
+    // Filter by status
+    if (statusFilter) {
+      if (statusFilter === "confirmed") {
+        // Show ONLY regular confirmed appointments (without rescheduleFromId)
+        filtered = filtered.filter(
+          (apt) => apt.status === "confirmed" && !isRescheduledAppointment(apt),
+        );
+      } else if (statusFilter === "rescheduled") {
+        // Show ONLY rescheduled appointments (with rescheduleFromId)
+        filtered = filtered.filter(
+          (apt) => apt.status === "confirmed" && isRescheduledAppointment(apt),
+        );
+      } else {
+        // Other status filters (cancelled_by_patient, cancelled_by_doctor, completed)
+        filtered = filtered.filter((apt) => apt.status === statusFilter);
+      }
+    }
+
+    // Filter by date
+    if (dateFilter) {
+      filtered = filtered.filter((apt) => {
+        const aptDate = new Date(apt.startTime).toISOString().split("T")[0];
+        return aptDate === dateFilter;
+      });
+    }
+
+    setFilteredAppointments(filtered);
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, dateFilter, appointments]);
+
+  const resetFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("");
+    setDateFilter("");
   };
 
   useEffect(() => {
@@ -78,13 +146,40 @@ export default function MyAppointments() {
     if (lastEvent) {
       switch (lastEvent.type) {
         case "confirmed":
-          toast.success("Your appointment has been confirmed!");
+          toast.success("Your appointment has been confirmed!", {
+            duration: 4000,
+            style: {
+              background: "#f0fdf4",
+              color: "#16a34a",
+              border: "1px solid #bbf7d0",
+              padding: "12px",
+              borderRadius: "12px",
+            },
+          });
           break;
         case "cancelled":
-          toast("An appointment was cancelled.");
+          toast("An appointment was cancelled.", {
+            duration: 4000,
+            style: {
+              background: "#fef2f2",
+              color: "#dc2626",
+              border: "1px solid #fecaca",
+              padding: "12px",
+              borderRadius: "12px",
+            },
+          });
           break;
         case "rescheduled":
-          toast.success("An appointment has been rescheduled.");
+          toast.success("An appointment has been rescheduled.", {
+            duration: 4000,
+            style: {
+              background: "#f0fdf4",
+              color: "#16a34a",
+              border: "1px solid #bbf7d0",
+              padding: "12px",
+              borderRadius: "12px",
+            },
+          });
           break;
         default:
           break;
@@ -108,7 +203,16 @@ export default function MyAppointments() {
 
   const handleConfirmCancel = async () => {
     if (!cancelReason.trim()) {
-      toast.error("Please enter a cancellation reason");
+      toast.error("Please enter a cancellation reason", {
+        duration: 4000,
+        style: {
+          background: "#fef2f2",
+          color: "#dc2626",
+          border: "1px solid #fecaca",
+          padding: "12px",
+          borderRadius: "12px",
+        },
+      });
       return;
     }
 
@@ -117,11 +221,29 @@ export default function MyAppointments() {
       await api.patch(`/api/appointments/${selectedAppointment._id}/cancel`, {
         reason: cancelReason,
       });
-      toast.success("Appointment cancelled successfully");
+      toast.success("Appointment cancelled successfully", {
+        duration: 4000,
+        style: {
+          background: "#f0fdf4",
+          color: "#16a34a",
+          border: "1px solid #bbf7d0",
+          padding: "12px",
+          borderRadius: "12px",
+        },
+      });
       closeCancelModal();
       fetchAppointments();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Cancellation failed");
+      toast.error(err.response?.data?.message || "Cancellation failed", {
+        duration: 4000,
+        style: {
+          background: "#fef2f2",
+          color: "#dc2626",
+          border: "1px solid #fecaca",
+          padding: "12px",
+          borderRadius: "12px",
+        },
+      });
     } finally {
       setSubmitting(false);
     }
@@ -130,13 +252,31 @@ export default function MyAppointments() {
   const handleReschedule = async (appointment) => {
     // Prevent multiple reschedule clicks
     if (reschedulingAppointmentId === appointment._id) {
-      toast.error("Already rescheduling this appointment");
+      toast.error("Already rescheduling this appointment", {
+        duration: 4000,
+        style: {
+          background: "#fef2f2",
+          color: "#dc2626",
+          border: "1px solid #fecaca",
+          padding: "12px",
+          borderRadius: "12px",
+        },
+      });
       return;
     }
 
     // Check if appointment has already been rescheduled
     if (rescheduledAppointmentIds.has(appointment._id)) {
-      toast.error("This appointment has already been rescheduled");
+      toast.error("This appointment has already been rescheduled", {
+        duration: 4000,
+        style: {
+          background: "#fef2f2",
+          color: "#dc2626",
+          border: "1px solid #fecaca",
+          padding: "12px",
+          borderRadius: "12px",
+        },
+      });
       return;
     }
 
@@ -155,14 +295,34 @@ export default function MyAppointments() {
     });
   };
 
-  const totalPages = Math.ceil(appointments.length / itemsPerPage);
-  const paginatedAppointments = appointments.slice(
+  const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage);
+  const paginatedAppointments = filteredAppointments.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) setCurrentPage(newPage);
+  };
+
+  // Generate page numbers to show (max 5 at a time)
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxPagesToShow = 5;
+
+    if (totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      const start = Math.max(1, currentPage - 2);
+      const end = Math.min(totalPages, start + maxPagesToShow - 1);
+
+      for (let i = start; i <= end; i++) {
+        pageNumbers.push(i);
+      }
+    }
+    return pageNumbers;
   };
 
   const formatDateTime = (date) => {
@@ -237,17 +397,92 @@ export default function MyAppointments() {
   };
 
   // Check if this is a new appointment created from reschedule
-  const isRescheduledAppointment = (apt) => {
+  const isNewRescheduledAppointment = (apt) => {
     return apt.rescheduleFromId;
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-slate-800">My Appointments</h1>
-        <span className="text-sm text-slate-500">
-          {appointments.length} total
-        </span>
+      {/* Header with gradient */}
+      <div>
+        <h1 className="text-2xl font-display font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
+          My Appointments
+        </h1>
+        <p className="text-neutral-500 text-sm mt-1">
+          Manage and track your appointments
+        </p>
+      </div>
+
+      {/* Search and Filter Bar - All in one row */}
+      <div className="bg-white rounded-2xl shadow-soft border border-neutral-200 p-4">
+        <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center">
+          {/* Search Input */}
+          <div className="flex-1 relative">
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search by doctor name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition"
+            />
+          </div>
+
+          {/* Status Filter - Separate Confirmed and Rescheduled */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-4 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 bg-white cursor-pointer min-w-[180px]"
+          >
+            <option value="">All Status</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="rescheduled">Rescheduled</option>
+            <option value="cancelled_by_patient">Cancelled by You</option>
+            <option value="cancelled_by_doctor">Cancelled by Doctor</option>
+            <option value="completed">Completed</option>
+          </select>
+
+          {/* Date Filter */}
+          <input
+            type="date"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="px-4 py-2 border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+          />
+
+          {/* Reset Button */}
+          <button
+            onClick={resetFilters}
+            className="px-5 py-2 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-medium hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2 whitespace-nowrap"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            Reset
+          </button>
+        </div>
       </div>
 
       {loading && (
@@ -272,19 +507,19 @@ export default function MyAppointments() {
             apt.status === "cancelled_by_patient" ||
             apt.status === "cancelled_by_doctor";
           const isRescheduled = hasBeenRescheduled(apt);
-          const isNewRescheduledAppointment = isRescheduledAppointment(apt);
+          const isNewRescheduled = isNewRescheduledAppointment(apt);
           const isCurrentlyRescheduling = reschedulingAppointmentId === apt._id;
 
           // Show reschedule button ONLY for cancelled appointments that have NOT been rescheduled
           const showRescheduleButton =
-            isCancelled && !isRescheduled && !isNewRescheduledAppointment;
+            isCancelled && !isRescheduled && !isNewRescheduled;
 
           // Show cancel button for confirmed appointments (including rescheduled ones)
           const showCancelButton = apt.status === "confirmed";
 
-          // For rescheduled appointments, ONLY show the blue Rescheduled badge (no Confirmed badge)
+          // For rescheduled appointments, show blue Rescheduled badge
           const showOnlyRescheduledBadge =
-            isNewRescheduledAppointment && apt.status === "confirmed";
+            isNewRescheduled && apt.status === "confirmed";
 
           return (
             <div
@@ -300,7 +535,6 @@ export default function MyAppointments() {
                       <h3 className="font-bold text-slate-800 text-lg">
                         {getDoctorDisplayName(apt.doctorName)}
                       </h3>
-                      {/* Show status badge only for non-rescheduled appointments */}
                       {!showOnlyRescheduledBadge && (
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${statusBadge.color}`}
@@ -309,7 +543,6 @@ export default function MyAppointments() {
                           {statusBadge.label}
                         </span>
                       )}
-                      {/* For rescheduled appointments, ONLY show the blue Rescheduled badge */}
                       {showOnlyRescheduledBadge && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                           <svg
@@ -546,24 +779,66 @@ export default function MyAppointments() {
       </div>
 
       {totalPages > 1 && (
-        <div className="flex justify-between items-center pt-4 border-t border-slate-200">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-slate-200">
           <span className="text-xs text-slate-500">
             Page {currentPage} of {totalPages}
           </span>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="px-3 py-1 border border-slate-300 rounded-lg text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+              className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors flex items-center gap-1"
             >
-              ← Previous
+              <svg
+                className="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+              Previous
             </button>
+
+            {/* Page Numbers */}
+            {getPageNumbers().map((pageNum) => (
+              <button
+                key={pageNum}
+                onClick={() => handlePageChange(pageNum)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  currentPage === pageNum
+                    ? "bg-primary-600 text-white shadow-sm"
+                    : "border border-slate-300 text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                {pageNum}
+              </button>
+            ))}
+
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 border border-slate-300 rounded-lg text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+              className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors flex items-center gap-1"
             >
-              Next →
+              Next
+              <svg
+                className="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
             </button>
           </div>
         </div>
@@ -627,7 +902,7 @@ export default function MyAppointments() {
                 <textarea
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
-                  placeholder="e.g., Patient request, Schedule conflict, Change of plans, etc."
+                  placeholder="e.g., Unavailable, Change of plans, etc."
                   rows={4}
                   className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
                   autoFocus
