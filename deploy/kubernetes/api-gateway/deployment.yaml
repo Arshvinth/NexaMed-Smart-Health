@@ -33,6 +33,8 @@ spec:
               value: "http://appointment-service:5003"
             - name: TELEMEDICINE_SERVICE_URL
               value: "http://telemedicine-service:5005"
+            - name: PATIENT_SERVICE_URL
+              value: "http://patient-service:8080"
           readinessProbe:
             httpGet:
               path: /health
