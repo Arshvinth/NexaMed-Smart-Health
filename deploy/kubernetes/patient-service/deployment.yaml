@@ -27,6 +27,8 @@ spec:
               value: "mongodb://mongo:27017/patient_service"
             - name: CORS_ORIGIN
               value: "http://localhost:3000"
+            - name: AI_SERVICE_URL
+              value: "http://symtomeschecker-service:8000"
           readinessProbe:
             httpGet:
               path: /health
