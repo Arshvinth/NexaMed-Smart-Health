@@ -9,4 +9,9 @@ def home():
         "message":"AI Engine Running"
     }
 
+
+@app.get('/health')
+def health():
+    return {"status": "ok"}
+
 app.include_router(predict_router)
