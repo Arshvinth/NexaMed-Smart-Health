@@ -23,7 +23,7 @@ spec:
               value: "8080"
             - name: NODE_ENV
               value: "production"
-            - name: MONGO_URI
+            - name: MONGODB_URI
               value: "mongodb://mongo:27017/patient_service"
             - name: CORS_ORIGIN
               value: "http://localhost:3000"

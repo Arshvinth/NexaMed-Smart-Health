@@ -67,6 +67,11 @@ app.use((error, req, res, next) => {
     next(error);
 });
 
+// Kubernetes health endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
+});
+
 //start server
 const PORT = process.env.PORT || 8081;
 
