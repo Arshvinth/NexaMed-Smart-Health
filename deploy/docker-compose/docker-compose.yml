@@ -1,0 +1,149 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: shp-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  user-service:
+    build:
+      context: ../../services/user-service
+    container_name: shp-user-service
+    restart: unless-stopped
+    environment:
+      PORT: "5001"
+      NODE_ENV: "production"
+      MONGODB_URI: "${GLOBAL_MONGODB_URI:-${USER_MONGODB_URI:-mongodb://mongo:27017/user_service}}"
+      JWT_SECRET: "${JWT_SECRET}"
+      JWT_EXPIRES_IN: "7d"
+      CORS_ORIGIN: "http://localhost:3000"
+      ADMIN_SEED_ENABLED: "true"
+      ADMIN_NAME: "${ADMIN_NAME:-System Admin}"
+      ADMIN_EMAIL: "${ADMIN_EMAIL:-admin@nexamed.com}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-Admin@123}"
+    depends_on:
+      - mongo
+
+  doctor-service:
+    build:
+      context: ../../services/doctor-service
+    container_name: shp-doctor-service
+    restart: unless-stopped
+    environment:
+      PORT: "5002"
+      NODE_ENV: "production"
+      AUTH_MODE: "jwt"
+      JWT_SECRET: "${JWT_SECRET}"
+      MONGODB_URI: "${GLOBAL_MONGODB_URI:-${DOCTOR_MONGODB_URI:-mongodb://mongo:27017/doctor_service}}"
+      CORS_ORIGIN: "http://localhost:3000"
+    depends_on:
+      - mongo
+      - user-service
+
+  appointment-service:
+    build:
+      context: ../../services/appointment-service
+    container_name: shp-appointment-service
+    restart: unless-stopped
+    environment:
+      PORT: "5003"
+      NODE_ENV: "production"
+      AUTH_MODE: "jwt"
+      JWT_SECRET: "${JWT_SECRET}"
+      MONGODB_URI: "${GLOBAL_MONGODB_URI:-${APPOINTMENT_MONGODB_URI:-mongodb://mongo:27017/appointment_service}}"
+      CORS_ORIGIN: "http://localhost:3000"
+      DOCTOR_SERVICE_URL: "http://doctor-service:5002"
+      TELEMEDICINE_SERVICE_URL: "http://telemedicine-service:5005"
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET}
+    depends_on:
+      - mongo
+      - doctor-service
+      - telemedicine-service
+
+  telemedicine-service:
+    build:
+      context: ../../services/telemedicine-service
+    container_name: shp-telemedicine-service
+    restart: unless-stopped
+    environment:
+      PORT: "5005"
+      NODE_ENV: "production"
+      AUTH_MODE: "jwt"
+      JWT_SECRET: "${JWT_SECRET}"
+      CORS_ORIGIN: "http://localhost:3000"
+  
+  payment-service:
+    build:
+      context: ../../services/payment-service
+    container_name: shp-payment-service
+    restart: unless-stopped
+    environment:
+      PORT: "5004"
+      NODE_ENV: "production"
+      MONGODB_URI: "${GLOBAL_MONGODB_URI:-${PAYMENT_MONGODB_URI:-mongodb://mongo:27017/payment_service}}"
+      CORS_ORIGIN: "http://localhost:3000"
+      APPOINTMENT_SERVICE_URL: "http://appointment-service:5003"
+      JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_here}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET}
+    depends_on:
+      - mongo
+      - appointment-service
+  
+  ai-service:
+    build:
+      context: ../../services/SymtomesChecker-Service
+    container_name: shp-ai-service
+    ports:
+      - "8000:8000"
+
+  patient-service:
+    build:
+      context: ../../services/patient-service
+    container_name: shp-patient-service
+    restart: unless-stopped
+    environment:
+      PORT: "8080"
+      NODE_ENV: "production"
+      MONGODB_URI: "${GLOBAL_MONGODB_URI:-${PATIENT_MONGODB_URI:-mongodb://mongo:27017/patient_service}}"
+      CORS_ORIGIN: "http://localhost:3000"
+      AI_SERVICE_URL: "http://ai-service:8000" 
+    depends_on:
+      - ai-service
+      - mongo
+
+  api-gateway:
+    build:
+      context: ../../services/api-gateway
+    container_name: shp-api-gateway
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: "5000"
+      NODE_ENV: "production"
+      CORS_ORIGIN: "http://localhost:3000"
+      USER_SERVICE_URL: "http://user-service:5001"
+      DOCTOR_SERVICE_URL: "http://doctor-service:5002"
+      APPOINTMENT_SERVICE_URL: "http://appointment-service:5003"
+      TELEMEDICINE_SERVICE_URL: "http://telemedicine-service:5005"
+      PAYMENT_SERVICE_URL: "http://payment-service:5004"
+      PATIENT_SERVICE_URL: "http://patient-service:8080"
+      JWT_SECRET: "${JWT_SECRET}"
+    depends_on:
+      - user-service
+      - doctor-service
+      - appointment-service
+      - telemedicine-service
+      - payment-service
+      - patient-service
+
+volumes:
+  mongo_data:

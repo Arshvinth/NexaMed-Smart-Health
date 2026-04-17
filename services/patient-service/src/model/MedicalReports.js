@@ -4,8 +4,25 @@ const MedicalReportSchema = new mongoose.Schema({
 
     patientId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Patient"
+        // ref: "Patient"
+        ref: "User"
     },
+    doctorId: {
+        type: String,
+        required: true
+    },
+    title: {
+        type: String,
+        required: true
+    },
+
+    description: String,
+
+    reportType: {
+        type: String,
+        enum: ["Lab Test", "Scan", "Other"]
+    },
+    diagnosis: String,
     file: {
         url: String
     },
@@ -15,4 +32,4 @@ const MedicalReportSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-export default mongoose.model('MedicalReport', MedicalReportSchema);
+export default mongoose.model('MedicalReport', MedicalReportSchema); 

@@ -29,6 +29,7 @@ import Availability from "./pages/doctor/Availability";
 import AppointmentRequests from "./pages/doctor/AppointmentRequests";
 import ConsultationRoom from "./pages/doctor/ConsultationRoom";
 import IssuePrescription from "./pages/doctor/IssuePrescription";
+import DoctorPrescriptions from "./pages/doctor/Prescriptions";
 import PatientReports from "./pages/doctor/PatientReports";
 
 // Admin pages
@@ -69,6 +70,7 @@ export const router = createBrowserRouter([
           { path: "/doctor/requests", element: <AppointmentRequests /> },
           { path: "/doctor/consult/:sessionId?", element: <ConsultationRoom /> },
           { path: "/doctor/prescriptions/:appointmentId?", element: <IssuePrescription /> },
+          { path: "/doctor/my-prescriptions", element: <DoctorPrescriptions /> },
           { path: "/doctor/patient-reports/:patientId?", element: <PatientReports /> },
 
           // Admin

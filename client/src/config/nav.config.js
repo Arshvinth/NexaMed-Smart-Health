@@ -6,7 +6,6 @@ export const patientNav = [
   { label: "Upload Reports", to: "/patient/reports/upload" },
   { label: "Prescriptions", to: "/patient/prescriptions" },
   { label: "Video Consultation", to: "/patient/video" },
-  { label: "Payments", to: "/patient/payments" },
   { label: "Symptom Checker (AI)", to: "/patient/symptom-checker" },
 ];
 
@@ -16,6 +15,7 @@ export const doctorNav = [
   { label: "Availability", to: "/doctor/availability" },
   { label: "Appointment Requests", to: "/doctor/requests" },
   { label: "Consultation Room", to: "/doctor/consult" },
+  { label: "My Prescriptions", to: "/doctor/my-prescriptions" },
   { label: "Issue Prescription", to: "/doctor/prescriptions" },
   { label: "Patient Reports", to: "/doctor/patient-reports" },
 ];
