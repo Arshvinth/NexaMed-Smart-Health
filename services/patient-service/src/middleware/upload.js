@@ -24,7 +24,9 @@ export const uploadToCloudinary = (file, folder) => {
             {
                 folder: folder,
                 allowed_formats: ['jpeg', 'jpg', 'png', 'gif', 'webp', 'pdf'],
-                resource_type: 'auto'
+                resource_type: 'auto',
+                type: "upload",
+                access_mode: "public"
             },
             (error, result) => {
                 if (error) {
