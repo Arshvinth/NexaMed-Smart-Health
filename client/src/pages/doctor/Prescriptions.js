@@ -41,6 +41,9 @@ const MEDICINE_SUGGESTIONS = [
   "Losartan",
 ];
 
+// Number of prescriptions to show per page
+const ITEMS_PER_PAGE = 3;
+
 // fetch prescriptions issued by the logged-in doctor
 async function fetchMyPrescriptions() {
   const response = await fetch(`${API_GATEWAY_BASE_URL}/api/prescriptions`, {
@@ -152,6 +155,7 @@ export default function DoctorPrescriptions() {
   const [appointments, setAppointments] = useState([]);
   const [userProfiles, setUserProfiles] = useState({});
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Load doctor's appointments for contextual data (queue numbers etc.)
   async function load() {
@@ -430,6 +434,21 @@ export default function DoctorPrescriptions() {
     });
   }, [prescriptions, userProfiles, appointmentDetails, search]);
 
+  // Ensure current page is valid when filtered results change
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(filteredPrescriptions.length / ITEMS_PER_PAGE));
+    if (currentPage > totalPages) setCurrentPage(1);
+  }, [filteredPrescriptions, currentPage]);
+
+  // Paginate filtered prescriptions
+  const paginatedPrescriptions = useMemo(() => {
+    const total = filteredPrescriptions.length;
+    const pages = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
+    const page = Math.min(Math.max(1, currentPage), pages);
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    return filteredPrescriptions.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredPrescriptions, currentPage]);
+
   // Render: header, search, list of prescriptions, and edit modal
   return (
     <div className="space-y-4">
@@ -488,7 +507,7 @@ export default function DoctorPrescriptions() {
         ) : (
           <div className="space-y-6">
             {/* Map through filtered prescriptions returned from doctor-service */}
-              {filteredPrescriptions.map((p) => {
+              {paginatedPrescriptions.map((p) => {
               // Derive a readable patient label; fall back to patientUserId
                 const displayPatientName =
                   p.patientName ||
@@ -599,6 +618,53 @@ export default function DoctorPrescriptions() {
                 </div>
               );
             })}
+            {/* Pagination controls */}
+            {filteredPrescriptions.length > ITEMS_PER_PAGE && (
+              <div className="mt-4 flex items-center justify-between">
+                <div className="text-sm text-slate-500">
+                  Showing {filteredPrescriptions.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredPrescriptions.length)} of {filteredPrescriptions.length}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="rounded-xl border border-slate-200 px-3 py-1 text-sm text-slate-700 disabled:opacity-50"
+                  >
+                    Prev
+                  </button>
+
+                  {Array.from({ length: Math.max(1, Math.ceil(filteredPrescriptions.length / ITEMS_PER_PAGE)) }).map((_, i) => {
+                    const page = i + 1;
+                    return (
+                      <button
+                        key={page}
+                        type="button"
+                        onClick={() => setCurrentPage(page)}
+                        className={[
+                          "rounded-full px-3 py-1 text-xs font-semibold transition",
+                          currentPage === page
+                            ? "bg-sky-600 text-white"
+                            : "bg-slate-100 text-slate-700 hover:bg-slate-200",
+                        ].join(" ")}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => p + 1)}
+                    disabled={currentPage >= Math.ceil(filteredPrescriptions.length / ITEMS_PER_PAGE)}
+                    className="rounded-xl border border-slate-200 px-3 py-1 text-sm text-slate-700 disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

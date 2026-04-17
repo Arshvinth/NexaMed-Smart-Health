@@ -19,6 +19,9 @@ const FILTERS = [
   "ALL",
 ];
 
+// Number of appointments to show per page
+const ITEMS_PER_PAGE = 3;
+
 function getStatusLabel(status) {
   // Convert status keys to human-readable labels
   return status
@@ -140,10 +143,13 @@ export default function AppointmentRequests() {
   const [appointments, setAppointments] = useState([]);
   const [userProfiles, setUserProfiles] = useState({});
   const [activeFilter, setActiveFilter] = useState("ALL");
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [searchName, setSearchName] = useState("");
+  const [searchQueue, setSearchQueue] = useState("");
 
   async function load() {
     // Load appointments from the API and update state
@@ -189,11 +195,47 @@ export default function AppointmentRequests() {
     });
   }, [appointments, userProfiles]);
 
-  // Compute visible appointments based on the active filter
+  // Compute visible appointments based on the active filter and search inputs
   const visibleRows = useMemo(() => {
-    if (activeFilter === "ALL") return appointments;
-    return appointments.filter((a) => a.status === activeFilter);
-  }, [appointments, activeFilter]);
+    let rows = appointments;
+
+    if (activeFilter !== "ALL") {
+      rows = rows.filter((a) => a.status === activeFilter);
+    }
+
+    const nameQuery = (searchName || "").trim().toLowerCase();
+    const queueQuery = (searchQueue || "").trim();
+
+    if (nameQuery) {
+      rows = rows.filter((a) => {
+        const name = (userProfiles[a.patientUserId]?.fullName || a.patientUserId || "").toString();
+        return name.toLowerCase().includes(nameQuery);
+      });
+    }
+
+    if (queueQuery) {
+      rows = rows.filter((a) => String(a.queueNumber ?? "").includes(queueQuery));
+    }
+
+    return rows;
+  }, [appointments, activeFilter, searchName, searchQueue, userProfiles]);
+
+  // Ensure current page is valid when visibleRows changes
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(visibleRows.length / ITEMS_PER_PAGE));
+    if (currentPage > totalPages) setCurrentPage(1);
+  }, [visibleRows, currentPage]);
+
+  // Paginate the visible rows
+  const paginatedRows = useMemo(() => {
+    const total = visibleRows.length;
+    const pages = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
+    const page = Math.min(Math.max(1, currentPage), pages);
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    return visibleRows.slice(start, start + ITEMS_PER_PAGE);
+  }, [visibleRows, currentPage]);
+
+  
 
   async function handleCancel(id) {
     // Prompt for reason and cancel appointment via API
@@ -271,22 +313,54 @@ export default function AppointmentRequests() {
 
       {/* Filter controls */}
       <div className="rounded-2xl border border-slate-200 bg-white p-4">
-        <div className="flex flex-wrap gap-2">
-          {FILTERS.map((f) => (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap gap-2">
+            {FILTERS.map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setActiveFilter(f)}
+                className={[
+                  "rounded-full px-3 py-1 text-xs font-semibold transition",
+                  activeFilter === f
+                    ? "bg-sky-600 text-white"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200",
+                ].join(" ")}
+              >
+                {f === "ALL" ? "ALL" : getStatusLabel(f)}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2 mt-2 sm:mt-0">
+            <input
+              type="text"
+              value={searchName}
+              onChange={(e) => setSearchName(e.target.value)}
+              placeholder="Search patient name"
+              className="rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none"
+            />
+
+            <input
+              type="text"
+              value={searchQueue}
+              onChange={(e) => setSearchQueue(e.target.value)}
+              placeholder="Queue #"
+              className="w-28 rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none"
+            />
+
             <button
-              key={f}
               type="button"
-              onClick={() => setActiveFilter(f)}
-              className={[
-                "rounded-full px-3 py-1 text-xs font-semibold transition",
-                activeFilter === f
-                  ? "bg-sky-600 text-white"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200",
-              ].join(" ")}
+              onClick={() => {
+                setSearchName("");
+                setSearchQueue("");
+                setActiveFilter("ALL");
+              }}
+              className="rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
             >
-              {f === "ALL" ? "ALL" : getStatusLabel(f)}
+              Clear
             </button>
-          ))}
+          </div>
         </div>
       </div>
 
@@ -317,7 +391,7 @@ export default function AppointmentRequests() {
             </div>
           ) : (
             <div className="space-y-4">
-              {visibleRows.map((appt) => {
+              {paginatedRows.map((appt) => {
                 const cancellable = CANCELLABLE_STATUSES.includes(appt.status);
                 const completable = COMPLETABLE_STATUSES.includes(appt.status);
                 const isBusy = busyId === appt._id;
@@ -331,6 +405,7 @@ export default function AppointmentRequests() {
                   >
                     <div className="flex flex-col lg:flex-row lg:items-stretch">
 
+      
                       {/* Reference / status column */}
                       <div className="flex flex-col border-b border-slate-100 p-5 lg:w-64 lg:border-b-0 lg:border-r bg-slate-50/50">
                         <span className="mb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Reference ID</span>
@@ -425,6 +500,53 @@ export default function AppointmentRequests() {
                   </div>
                 );
               })}
+              {/* Pagination controls */}
+              {visibleRows.length > ITEMS_PER_PAGE && (
+                <div className="mt-4 flex items-center justify-between">
+                  <div className="text-sm text-slate-500">
+                    Showing {visibleRows.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, visibleRows.length)} of {visibleRows.length}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="rounded-xl border border-slate-200 px-3 py-1 text-sm text-slate-700 disabled:opacity-50"
+                    >
+                      Prev
+                    </button>
+
+                    {Array.from({ length: Math.max(1, Math.ceil(visibleRows.length / ITEMS_PER_PAGE)) }).map((_, i) => {
+                      const page = i + 1;
+                      return (
+                        <button
+                          key={page}
+                          type="button"
+                          onClick={() => setCurrentPage(page)}
+                          className={[
+                            "rounded-full px-3 py-1 text-xs font-semibold transition",
+                            currentPage === page
+                              ? "bg-sky-600 text-white"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200",
+                          ].join(" ")}
+                        >
+                          {page}
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((p) => p + 1)}
+                      disabled={currentPage >= Math.ceil(visibleRows.length / ITEMS_PER_PAGE)}
+                      className="rounded-xl border border-slate-200 px-3 py-1 text-sm text-slate-700 disabled:opacity-50"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

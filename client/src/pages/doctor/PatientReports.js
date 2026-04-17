@@ -231,7 +231,7 @@ export default function PatientReports() {
 
   // left side patient list and right details/reports panel
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" style={{ fontSize: "15px" }}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
