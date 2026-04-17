@@ -1,30 +1,27 @@
+
 # Telemedicine Service — API Contract
 
-## Base URL
-- Docker Compose / Local: `http://localhost:5000`
+Base URL (local dev): `http://localhost:5005`
 
-Gateway route mapping:
+Gateway route mapping (API Gateway):
 - `/api/sessions/*` -> telemedicine-service
 
-## Authentication (DEV mode)
-This service uses dev-auth headers (until JWT is integrated).
+Authentication
+- Supports `dev` (default) and `jwt` via `AUTH_MODE` env.
 
-### Required headers
+Dev mode headers (for Postman / local testing):
 - `x-user-id`: string (example: `pat-001`)
 - `x-role`: `doctor` | `patient` | `admin`
 
-If headers are missing, API returns:
-- `401 Unauthorized`
+JWT mode: provide `Authorization: Bearer <token>` signed with `JWT_SECRET`.
 
 ---
 
 ## 1. Health Check
 
-### Request
-**GET** `/health`
+GET `/health`
 
-### Response
-**200 OK**
+Response 200
 ```json
 {
   "success": true,
@@ -34,24 +31,20 @@ If headers are missing, API returns:
 
 ---
 
-## 2. Create Session Link (Stateless)
+## 2. Create Session Link (stateless)
 
-### Request
-**POST** `/api/sessions`
+POST `/api/sessions`
 
 Headers:
-- `x-user-id`
-- `x-role`
+- `x-user-id` (dev) or `Authorization` (jwt)
+- `x-role` (dev)
 
 Body:
 ```json
-{
-  "appointmentId": "apt-001"
-}
+{ "appointmentId": "apt-001" }
 ```
 
-### Response
-**201 Created**
+Response 201
 ```json
 {
   "success": true,
@@ -64,26 +57,19 @@ Body:
 }
 ```
 
-### Errors
-- **400 Bad Request** if `appointmentId` is missing/empty
-- **401 Unauthorized** if auth headers missing
+Errors
+- 400 Bad Request: missing/invalid `appointmentId`
+- 401 Unauthorized: missing dev headers or invalid JWT
 
 ---
 
 ## 3. Get Session Link
 
-### Request
-**GET** `/api/sessions/:appointmentId`
+GET `/api/sessions/:appointmentId`
 
-Headers:
-- `x-user-id`
-- `x-role`
+Headers: same as above
 
-Example:
-`GET /api/sessions/apt-001`
-
-### Response
-**200 OK**
+Response 200
 ```json
 {
   "success": true,
@@ -95,3 +81,7 @@ Example:
   }
 }
 ```
+
+Notes
+- This service is intentionally stateless for session links: `create` merely derives a deterministic room name from `appointmentId` using `buildSession()`.
+- Default service port: `5005` (use `PORT` env to override).

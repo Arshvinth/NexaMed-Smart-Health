@@ -98,6 +98,7 @@ export default function PatientReports() {
   // Cache of user profiles (from user-service) and report loading errors
   const [userProfiles, setUserProfiles] = useState({});
   const [reportsError, setReportsError] = useState("");
+  const [patientSearch, setPatientSearch] = useState("");
 
   // Load doctor appointments + all patient profiles on first render
   useEffect(() => {
@@ -161,6 +162,19 @@ export default function PatientReports() {
       };
     });
   }, [appointments, patients]);
+
+  // Filter doctorPatients by search term (patient name or id)
+  const filteredDoctorPatients = useMemo(() => {
+    const q = (patientSearch || "").trim().toLowerCase();
+    if (!q) return doctorPatients;
+
+    return doctorPatients.filter((p) => {
+      const displayName = (
+        userProfiles[p.userId]?.fullName || p.profile?.fullName || p.userId || ""
+      ).toString().toLowerCase();
+      return displayName.includes(q) || (p.userId || "").toLowerCase().includes(q);
+    });
+  }, [doctorPatients, userProfiles, patientSearch]);
 
   // Find the currently selected patient (by userId) from computed list
   const selectedPatient = useMemo(
@@ -252,9 +266,19 @@ export default function PatientReports() {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         {/* Left: list of patients with confirmed appointments */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-slate-800 uppercase tracking-wide">
-            Patients
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-slate-800 uppercase tracking-wide">
+              Patients
+            </h2>
+            <input
+              type="search"
+              aria-label="Search patients by name"
+              value={patientSearch}
+              onChange={(e) => setPatientSearch(e.target.value)}
+              placeholder="Search patient name"
+              className="ml-3 w-48 rounded-lg border border-slate-300 px-2 py-1 text-sm shadow-sm"
+            />
+          </div>
 
           {loading ? (
             <p className="text-sm text-slate-600">Loading patients...</p>
@@ -264,7 +288,7 @@ export default function PatientReports() {
             </p>
           ) : (
             <ul className="space-y-2 max-h-80 overflow-y-auto pr-1">
-              {doctorPatients.map((p) => {
+              {filteredDoctorPatients.map((p) => {
                 const isSelected = p.userId === selectedPatientUserId;
                 const lastApptTime = p.lastAppointment?.startTime
                   ? new Date(p.lastAppointment.startTime).toLocaleString()
