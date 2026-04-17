@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { getAuthHeaders } from "../../utils/userAuth";
 
@@ -9,6 +9,9 @@ export default function UploadReports() {
   const [uploadedReports, setUploadedReports] = useState([]);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [doctors, setDoctors] = useState([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState("");
 
   // Form data for medical report
   const [formData, setFormData] = useState({
@@ -18,6 +21,38 @@ export default function UploadReports() {
     diagnosis: "",
     doctorId: ""
   });
+
+  useEffect(() => {
+    fetchDoctors();
+  }, []);
+
+  const fetchDoctors = async () => {
+    setLoadingDoctors(true);
+    try {
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const patientId = storedUser?.id || localStorage.getItem('x-user-id') || 'TEST001';
+
+      const response = await fetch('http://localhost:5000/api/doctors', {
+        headers: {
+          'x-user-id': patientId,
+          'x-role': 'PATIENT'
+        }
+      });
+
+      if (response.ok) {
+        const doctorsList = await response.json();
+        setDoctors(doctorsList);
+      } else {
+        console.error('Failed to fetch doctors:', response.status);
+        setError('Failed to load doctors list');
+      }
+    } catch (err) {
+      console.error('Error fetching doctors:', err);
+      setError('Failed to load doctors list');
+    } finally {
+      setLoadingDoctors(false);
+    }
+  };
 
   // Use shared getAuthHeaders from utils; we'll remove Content-Type for FormData
 
@@ -65,6 +100,15 @@ export default function UploadReports() {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
+    });
+  };
+
+  const handleDoctorSelect = (e) => {
+    const doctorId = e.target.value;
+    setSelectedDoctor(doctorId);
+    setFormData({
+      ...formData,
+      doctorId: doctorId
     });
   };
 
@@ -253,17 +297,28 @@ export default function UploadReports() {
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1">
-                  Doctor ID *
+                  Select Doctor *
                 </label>
-                <input
-                  type="text"
-                  name="doctorId"
-                  value={formData.doctorId}
-                  onChange={handleInputChange}
+                <select
+                  value={selectedDoctor}
+                  onChange={handleDoctorSelect}
                   className="w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:ring-4 focus:ring-sky-100 focus:border-sky-400"
-                  placeholder="Enter doctor ID"
                   required
-                />
+                  disabled={loadingDoctors}
+                >
+                  <option value="">{loadingDoctors ? "Loading doctors..." : "Select a doctor"}</option>
+                  {doctors.map((doctor) => (
+                    <option key={doctor._id} value={doctor.userId}>
+                      Dr. {doctor.fullName} - {doctor.specialization}
+                    </option>
+                  ))}
+                </select>
+                {doctors.length === 0 && !loadingDoctors && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    No verified doctors available. Please check back later.
+                  </p>
+                )}
+
               </div>
             </div>
 
